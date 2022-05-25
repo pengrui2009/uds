@@ -326,6 +326,7 @@ void uds_ap_process(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
             
             // check if sid in uds_service_list
             if (uds_service_ptr != (uds_ap_service_t *)0) {
+                printf("sid:%d uds_service find\n", ptp->in.buf[0]);
                 // current session is satisfied for sid
                 if (uds_service_ptr->spt_ses & pap->cur_ses) {
                     // current security is satisfied for sid
