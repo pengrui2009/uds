@@ -9,14 +9,13 @@
  * @Copyright (C)  2022  Jixing. all right reserved
 ***********************************************************************/
 
-#include "test.h"
+#include "uds.h"
 
+#include <signal.h>
 #include <unistd.h>
 #include <pthread.h>
-
+// #include "uds_phycan.h"
 // timer for windows
-
-
 
 uint32_t timerCount = 0;
 uint8_t fr_i = 0;
@@ -56,6 +55,11 @@ void* thread_entry(void *arg)
     return (void *)NULL;
 }
 
+static void sighand(int sig)
+{
+    (void)sig;
+}
+
 
 int main(void) 
 {      
@@ -65,6 +69,10 @@ int main(void)
     int timerID;
     bool_t stop = false;
     pthread_t tid;
+
+    /* Allow signals to interrupt syscalls */
+    // signal(SIGINT, sighand);
+    // siginterrupt(SIGINT, 1);
 
     uds_init();
     
@@ -78,16 +86,23 @@ int main(void)
         printf("pthread_create failed!\n");
         return -1;
     }
-
+    
 	while (true){
         if (timerCount > SECURITYACCESS_DELAY_TIME) {
             if (fr_i < FR_NUM) {
-                printf("fr_i:%d\n", fr_i);
-                uds_recv_frame(&uds_dl.in_qf, fr[fr_i++]);
+                // printf("fr_i:%d\n", fr_i);
+                can_std_frame_t fr;
+                
+                uds_can_recv_frame(&uds_dl.in_qf, &fr);
+                
+                if (fr.id != 0x7e2)
+                {
+                    continue;
+                }
             } else {
                 stop = true;
             }
-        } 
+        }
         uds_process();
         // printf("main: %ud\n", timerCount);
 

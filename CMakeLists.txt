@@ -6,22 +6,25 @@ project(uds LANGUAGES C)
 
 include_directories(
     $(CMAKE_CURRENT_SOURCE_DIR)
-    src
+    src/uds_server
     test
 )
 
 add_library(uds SHARED
-    src/uds_ap.c
-    src/uds_dl.c
-    src/uds_q.c
-    src/uds_tp.c
-    src/uds.c
+    src/uds_server/uds_ap.c
+    src/uds_server/uds_dl.c
+    src/uds_server/uds_q.c
+    src/uds_server/uds_tp.c
+    src/uds_server/uds.c
+    src/uds_server/uds_phycan.c
 )
 
 add_executable(test_server
-    test/test_server_linux.c
+    test/uds_server_test_linux.c
 )
+
 target_link_libraries(test_server
     uds
     pthread
+    canlib
 )
