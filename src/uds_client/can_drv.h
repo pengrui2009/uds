@@ -9,19 +9,14 @@
  * 
  */
 
-#ifndef UDS_PHY_CAN_H_
-#define UDS_PHY_CAN_H_
+#ifndef UDS_DRV_CAN_H_
+#define UDS_DRV_CAN_H_
 
 #include "uds.h"
 
 #define READ_WAIT_INFINITE      (unsigned long)(-1)
 #define WRITE_WAIT_INFINITE     (unsigned long)(-1)
 
-typedef struct {
-    uint32_t id;
-    uint8_t buf[8];
-    uint16_t buf_len;
-} can_t;
 
 /**
  * @brief can init
@@ -48,4 +43,4 @@ uint8_t can_rx(uds_q_t *q, can_std_frame_t *fr);
  */
 uint8_t can_tx(can_std_frame_t *fr);
 
-#endif
+#endif /* UDS_DRV_CAN_H_ */

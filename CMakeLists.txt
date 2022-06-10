@@ -19,6 +19,16 @@ add_library(uds SHARED
     src/uds_server/uds_phycan.c
 )
 
+add_library(udsc SHARED
+    src/uds_client/uds_ap.c
+    src/uds_client/uds_dl.c
+    src/uds_client/uds_q.c
+    src/uds_client/uds_tp.c
+    src/uds_client/uds.c
+    src/uds_client/can_drv.c
+)
+
+
 add_executable(test_server
     test/uds_server_test_linux.c
 )

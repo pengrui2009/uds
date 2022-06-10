@@ -9,13 +9,12 @@
  * @Copyright (C)  2022  Jixing. all right reserved
 ***********************************************************************/
 
-#include "uds.h"
+#include "uds_phycan.h"
 
 #include <signal.h>
 #include <unistd.h>
 #include <pthread.h>
-// #include "uds_phycan.h"
-// timer for windows
+
 
 uint32_t timerCount = 0;
 uint8_t fr_i = 0;
@@ -35,13 +34,6 @@ can_std_frame_t fr[] = {
 
 #define FR_NUM sizeof(fr) / sizeof(can_std_frame_t)
 
-// void WINAPI task0_10ms(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
-// {
-//     timerCount++;
-//     uds_timer_tick();
-//     printf("timer: %ld\n", timerCount);
-// }
-
 void* thread_entry(void *arg)
 {
     while(1)
@@ -60,7 +52,6 @@ static void sighand(int sig)
     (void)sig;
 }
 
-
 int main(void) 
 {      
     // DWORD_PTR dwUser;
@@ -74,7 +65,12 @@ int main(void)
     // signal(SIGINT, sighand);
     // siginterrupt(SIGINT, 1);
 
-    uds_init();
+    ret = uds_init(0);
+    if (ret)
+    {
+        printf("uds init failed\n");
+        return -1;
+    }
     
     // 设置定时器
     // dwUser=(DWORD_PTR)&time;
@@ -91,9 +87,17 @@ int main(void)
         if (timerCount > SECURITYACCESS_DELAY_TIME) {
             if (fr_i < FR_NUM) {
                 // printf("fr_i:%d\n", fr_i);
-                can_std_frame_t fr;
+                can_std_frame_t fr = {
+                    .id = 0,
+                    .dlc = 0,
+                    .dt = {0},
+                };
                 
-                uds_can_recv_frame(&uds_dl.in_qf, &fr);
+                ret = can_rx(&uds_dl.in_qf, &fr);
+                if (ret)
+                {
+                    continue;
+                }
                 
                 if (fr.id != 0x7e2)
                 {
@@ -104,7 +108,6 @@ int main(void)
             }
         }
         uds_process();
-        // printf("main: %ud\n", timerCount);
 
         if ((!uds_dl.in_qf.qentries) && stop) {
             break;

@@ -10,9 +10,7 @@
 ***********************************************************************/
 
 
-#include "uds.h"
-
-
+#include "uds_phycan.h"
 
 /**
  * @brief 
@@ -59,8 +57,14 @@ void uds_dl_process_in(uds_dl_layer_t *pdl)
  */
 void uds_dl_process_out(uds_dl_layer_t *pdl)
 {
+    int ret = 0;
     if (pdl->out.sts == L_STS_READY) {
-        uds_can_send_frame(&pdl->out.fr);
+        ret = can_tx(&pdl->out.fr);
+        if (ret)
+        {
+            printf("can tx frame failed\n");
+            return;
+        }
         pdl->out.sts = L_STS_IDLE;
     }
 }

@@ -103,7 +103,7 @@ typedef enum {
 
 
 typedef struct {
-    uint16_t    id;
+    uint32_t    id;
     uint16_t    dlc;
     uint8_t     dt[UDS_DL_CAN_DL];
 } can_std_frame_t;
@@ -468,8 +468,13 @@ UDS_EXT uds_dl_layer_t uds_dl;
 UDS_EXT uds_tp_layer_t uds_tp;
 UDS_EXT uds_ap_layer_t uds_ap;
 
+/**
+ * @brief 
+ * 
+ * @return int 
+ */
+int uds_init(int channel);
 
-void uds_init(void);
 void uds_process(void);
 void uds_timer_tick(void);
 

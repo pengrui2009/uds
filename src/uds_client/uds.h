@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "cmn.h"
 #include "uds_cfg.def"
 #define UDS_TP_Cs                (UDS_TP_Cr - UDS_TP_As)
 #define UDS_TP_Br                (UDS_TP_Bs - UDS_TP_Ar)
@@ -51,21 +52,7 @@ typedef double                      float64;
 
 
 /* uds queue contain can frame */
-typedef struct {
-    void *qstart;
-    void *qend;
-    void *qin;
-    void *qout;
-    uint8_t qentries;   /* buf have value number */
-    uint8_t qsize;      /* buf size */
-} uds_q_t;
 
-
-typedef enum {
-    UDS_Q_OK = 0,
-    UDS_Q_FULL,
-    UDS_Q_EMPTY,
-} uds_q_rslt;
 
 
 uds_q_rslt uds_qdequeue(uds_q_t *q, void *elem, uint16_t sz);
@@ -102,11 +89,6 @@ typedef enum {
 } uds_dl_sts_t;
 
 
-typedef struct {
-    uint16_t    id;
-    uint16_t    dlc;
-    uint8_t     dt[UDS_DL_CAN_DL];
-} can_std_frame_t;
 
 
 typedef struct {

@@ -8,7 +8,9 @@
  * @copyright rui.peng Copyright (c) 2022
  * 
  */
-#include "uds_phycan.h"
+#include "can_drv.h"
+#include "uds_q.h"
+
 #include <canlib.h>
 
 #include <canstat.h>

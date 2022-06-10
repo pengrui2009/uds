@@ -17,19 +17,25 @@
 #include "uds_phycan.h"
 
 /**
- * @brief 
+ * @brief uds init
  * 
+ * @param channel : can channel(kvaser used)
+ * @return int 
+            0:      success 
+            other:  failed
  */
-void uds_init(void) 
+int uds_init(int channel) 
 {
-    if (uds_can_init(0))
+    if (can_init(channel))
     {
         printf("uds can init failed\n");
-        return;
+        return -1;
     }
     uds_dl_init(&uds_dl);
     uds_tp_init(&uds_tp); 
     uds_ap_init(&uds_ap);
+
+    return 0;
 }
 
 

@@ -9,9 +9,7 @@
  * @Copyright (C)  2022  Jixing. all right reserved
 ***********************************************************************/
 
-
 #include "uds.h"
-
 
 
 static void uds_ap_process_s3_to(void *pap);

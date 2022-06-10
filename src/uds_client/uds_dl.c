@@ -11,8 +11,7 @@
 
 
 #include "uds.h"
-
-
+#include "can_drv.h"
 
 /**
  * @brief 
@@ -60,7 +59,7 @@ void uds_dl_process_in(uds_dl_layer_t *pdl)
 void uds_dl_process_out(uds_dl_layer_t *pdl)
 {
     if (pdl->out.sts == L_STS_READY) {
-        uds_send_frame(&pdl->out.fr);
+        can_tx(&pdl->out.fr);
         pdl->out.sts = L_STS_IDLE;
     }
 }
