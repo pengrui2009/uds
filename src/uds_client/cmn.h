@@ -16,6 +16,35 @@
 
 #define UDS_DL_CAN_DL                   8u
 
+#ifdef UDS_GLOABL
+#define UDS_EXT
+#else
+#define UDS_EXT extern
+#endif
+
+/* common data type defination */
+typedef unsigned int                uint32_t;
+typedef unsigned short              uint16_t;
+typedef unsigned char               uint8_t;
+typedef unsigned char               bool_t;
+typedef signed   int                int32_t;
+typedef signed   short              int16_t;
+typedef signed   char               int8_t;
+typedef float                       float32;
+typedef double                      float64;
+
+#ifdef false
+#undef false
+#endif 
+#ifdef true
+#undef true
+#endif 
+
+#define false                       0u
+#define true                        1u
+
+
+
 typedef struct {
     uint32_t id;
     uint8_t buf[8];

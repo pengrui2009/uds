@@ -1,7 +1,7 @@
 /**
  * @file uds_q.h
  * @author rui.peng (rui.peng@tusen.ai)
- * @brief 
+ * @brief uds queue contain can frame
  * @version 0.1
  * @date 2022-06-10
  * 
@@ -29,7 +29,7 @@ typedef enum {
  * @param sz 
  * @return uds_q_rslt 
  */
-uds_q_rslt uds_qdequeue(uds_q_t *q, void *elem, uint16_t sz)
+uds_q_rslt uds_qdequeue(uds_q_t *q, void *elem, uint16_t sz);
 
 /**
  * @brief put a elem in queue
@@ -39,7 +39,7 @@ uds_q_rslt uds_qdequeue(uds_q_t *q, void *elem, uint16_t sz)
  * @param sz            sizeof elem type
  * @return uds_q_rslt 
  */
-uds_q_rslt uds_qenqueue(uds_q_t *q, void *elem, uint16_t sz)
+uds_q_rslt uds_qenqueue(uds_q_t *q, void *elem, uint16_t sz);
 
 /**
  * @brief clear a queue

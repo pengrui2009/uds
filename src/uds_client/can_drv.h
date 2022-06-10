@@ -12,7 +12,9 @@
 #ifndef UDS_DRV_CAN_H_
 #define UDS_DRV_CAN_H_
 
-#include "uds.h"
+#include "uds_q.h"
+
+#include <stdint.h>
 
 #define READ_WAIT_INFINITE      (unsigned long)(-1)
 #define WRITE_WAIT_INFINITE     (unsigned long)(-1)

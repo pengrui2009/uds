@@ -14,13 +14,23 @@
 #include "uds.h"
 
 
-
 /**
- * @brief 
+ * @brief uds init
  * 
+ * @param channel 
+ * @return int 
+            0   : success
+            <0  : failed
  */
-void uds_init(void) 
+int uds_init(int channel) 
 {
+    int ret = 0;
+    
+    if (can_init(channel))
+    {
+        printf("can init failed!\n");
+        return -1;
+    }
     uds_dl_init(&uds_dl);
     uds_tp_init(&uds_tp); 
     uds_ap_init(&uds_ap);

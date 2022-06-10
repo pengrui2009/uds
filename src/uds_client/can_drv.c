@@ -10,6 +10,7 @@
  */
 #include "can_drv.h"
 #include "uds_q.h"
+#include "uds_cfg.def"
 
 #include <canlib.h>
 
