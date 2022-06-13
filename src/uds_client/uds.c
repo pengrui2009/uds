@@ -44,11 +44,12 @@ int uds_init(int channel)
  */
 void uds_process(void)
 {
-    uds_dl_process_in(&uds_dl);
-    uds_tp_process_in(&uds_tp, &uds_dl);
     uds_ap_process(&uds_ap, &uds_tp);
     uds_tp_process_out(&uds_tp, &uds_dl);
     uds_dl_process_out(&uds_dl);
+    
+    uds_dl_process_in(&uds_dl);
+    uds_tp_process_in(&uds_tp, &uds_dl);
 }
 
 
