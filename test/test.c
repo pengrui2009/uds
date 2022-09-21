@@ -10,17 +10,21 @@
 ***********************************************************************/
 
 #include "test.h"
-#include <windows.h>
-#include <mmsystem.h>
+// #include <windows.h>
+// #include <mmsystem.h>
 
 // timer for windows
-
+#include <stdint.h>
+#include <signal.h>
+#include <unistd.h>
+#include <pthread.h>
 
 
 uint32_t timerCount = 0;
 uint8_t fr_i = 0;
 
-can_std_frame_t fr[] = {
+can_std_frame_t fr[] = 
+{
     {0x7e2, 8, {0x02, 0x10, 0x03}},
     {0x7e2, 8, {0x02, 0x27, 0x01}},
     {0x7e2, 8, {0x04, 0x27, 0x02, 0x99, 0x11}},
@@ -32,17 +36,32 @@ can_std_frame_t fr[] = {
 
 #define FR_NUM sizeof(fr) / sizeof(can_std_frame_t)
 
-void WINAPI task0_10ms(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
+// void WINAPI task0_10ms(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
+// {
+//     timerCount++;
+//     uds_timer_tick();
+//     printf("timer: %ld\n", timerCount);
+// }
+
+void* thread_entry(void *arg)
 {
-    timerCount++;
-    uds_timer_tick();
-    printf("timer: %ld\n", timerCount);
+    while(1)
+    {
+        timerCount++;
+        uds_timer_tick();
+        // printf("timer: %d\n", timerCount);
+        usleep(10000);
+    }
+
+    return (void *)NULL;
 }
 
 
 int main(void) 
 {      
-    DWORD_PTR dwUser;
+    // DWORD_PTR dwUser;
+    pthread_t tid;
+
 
     int time = 0;
     int timerID;
@@ -51,22 +70,32 @@ int main(void)
     uds_init();
     
     // 设置定时器
-    dwUser=(DWORD_PTR)&time;
-	timerID = timeSetEvent(10, 1, (LPTIMECALLBACK)task0_10ms, dwUser, TIME_PERIODIC);
+    // dwUser=(DWORD_PTR)&time;
+	// timerID = timeSetEvent(10, 1, (LPTIMECALLBACK)task0_10ms, dwUser, TIME_PERIODIC);
 	// timerID = timeSetEvent(10, 1, (LPTIMECALLBACK)task1_10ms, dwUser, TIME_PERIODIC);
+    int ret = pthread_create(&tid, NULL, &thread_entry, &time);
+    if (ret)
+    {
+        printf("pthread_create failed!\n");
+        return -1;
+    }
 
-	while (true){
-        if (timerCount > SECURITYACCESS_DELAY_TIME) {
-            if (fr_i < FR_NUM) {
+	while (true)
+    {
+        if (timerCount > SECURITYACCESS_DELAY_TIME) 
+        {
+            if (fr_i < FR_NUM) 
+            {
                 uds_recv_frame(&uds_dl.in_qf, fr[fr_i++]);
             } else {
                 stop = true;
             }
         } 
         uds_process();
-        printf("main: %ld\n", timerCount);
+        // printf("main: %ld\n", timerCount);
 
-        if ((!uds_dl.in_qf.qentries) && stop) {
+        if ((!uds_dl.in_qf.qentries) && stop) 
+        {
             break;
         }
 
