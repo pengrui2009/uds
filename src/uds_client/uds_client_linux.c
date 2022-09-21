@@ -83,23 +83,23 @@ int main()
 	while (true){
         if (timerCount > SECURITYACCESS_DELAY_TIME) {
             if (fr_i < FR_NUM) {
-                // printf("fr_i:%d\n", fr_i);
-                can_std_frame_t fr = {
-                    .id = 0,
-                    .dlc = 0,
-                    .dt = {0},
-                };
+                printf("fr_i:%d\n", fr_i);
+                // can_std_frame_t fr = {
+                //     .id = 0,
+                //     .dlc = 0,
+                //     .dt = {0},
+                // };
                 
-                ret = can_rx(&uds_dl.in_qf, &fr);
+                ret = can_tx(&fr[fr_i]);
                 if (ret)
                 {
                     continue;
                 }
                 
-                if (fr.id != 0x7e2)
-                {
-                    continue;
-                }
+                // if (fr.id != 0x7e2)
+                // {
+                //     continue;
+                // }
             } else {
                 stop = true;
             }

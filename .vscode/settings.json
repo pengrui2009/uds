@@ -10,5 +10,6 @@
         "stdlib.h": "c",
         "windows.h": "c",
         "_mingw.h": "c"
-    }
+    },
+    "ros.distro": "kinetic"
 }
