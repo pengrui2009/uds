@@ -1,14 +1,3 @@
 {
-    "files.associations": {
-        "*.def": "c",
-        ".h": "c",
-        "uds.h": "c",
-        "pthread.h": "c",
-        "mmsystem.h": "c",
-        "unistd.h": "c",
-        "stdio.h": "c",
-        "stdlib.h": "c",
-        "windows.h": "c",
-        "_mingw.h": "c"
-    }
+    "ros.distro": "kinetic"
 }
