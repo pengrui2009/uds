@@ -59,7 +59,8 @@ void uds_dl_process_out(uds_dl_layer_t *pdl)
 {
     int ret = 0;
     if (pdl->out.sts == L_STS_READY) {
-        ret = can_tx(&pdl->out.fr);
+        //ret = can_tx(&pdl->out.fr);
+        ret = CanSend(&pdl->out.fr.id, pdl->out.fr.dt, pdl->out.fr.dlc);
         if (ret)
         {
             printf("can tx frame failed\n");

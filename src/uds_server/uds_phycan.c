@@ -76,7 +76,7 @@ ErrorExit:
         1: receive failed 
         2: can device not init
  */
-uint8_t can_rx(uds_q_t *q, can_std_frame_t *fr) 
+uint8_t can_rx(can_std_frame_t *fr) 
 {
     uint8_t ret = 0;
     canStatus stat = canOK;
@@ -96,11 +96,7 @@ uint8_t can_rx(uds_q_t *q, can_std_frame_t *fr)
     if (stat == canOK)
     {
         fr->id = id;
-        fr->dlc = dlc;
-        if (fr->id == UDS_TP_FUNCTION_ADDR || fr->id == UDS_TP_PHYSICAL_ADDR) {
-            uds_qenqueue(q, fr, (uint16_t)(sizeof(can_std_frame_t)));
-        }
-        
+        fr->dlc = dlc;                
         ret = 0;
     } else {
         ret = 1;

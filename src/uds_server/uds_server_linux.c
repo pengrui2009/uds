@@ -8,7 +8,7 @@
  *
  * @Copyright (C)  2022  Jixing. all right reserved
 ***********************************************************************/
-
+#include "socketcan.h"
 #include "uds_phycan.h"
 
 #include <signal.h>
@@ -64,6 +64,8 @@ int main(void)
     /* Allow signals to interrupt syscalls */
     // signal(SIGINT, sighand);
     // siginterrupt(SIGINT, 1);
+    char *argv[] = {"server" ,"vcan0"};
+    CanInit(2, argv);
 
     ret = uds_init(0);
     if (ret)
@@ -84,29 +86,29 @@ int main(void)
     }
     
 	while (true){
-        if (timerCount > SECURITYACCESS_DELAY_TIME) {
-            if (fr_i < FR_NUM) {
-                // printf("fr_i:%d\n", fr_i);
-                can_std_frame_t fr = {
-                    .id = 0,
-                    .dlc = 0,
-                    .dt = {0},
-                };
+        can_std_frame_t fr = 
+        {
+            .id = 0,
+            .dlc = 0,
+            .dt = {0},
+        };
                 
-                ret = can_rx(&uds_dl.in_qf, &fr);
-                if (ret)
-                {
-                    continue;
-                }
-                
-                if (fr.id != 0x7e2)
-                {
-                    continue;
-                }
-            } else {
-                stop = true;
-            }
+        ret = CanRxPoll(&fr.id, fr.dt, &fr.dlc);
+        if (ret != 1)
+        {
+            continue;
         }
+        printf("canid:%x\n", fr.id);
+        if (fr.id == UDS_TP_FUNCTION_ADDR || fr.id == UDS_TP_PHYSICAL_ADDR) 
+        {
+            uds_qenqueue(&uds_dl.in_qf, &fr, (uint16_t)(sizeof(can_std_frame_t)));
+        }
+
+        if (fr.id != UDS_TP_PHYSICAL_ADDR)
+        {
+            continue;
+        }
+            
         uds_process();
 
         if ((!uds_dl.in_qf.qentries) && stop) {

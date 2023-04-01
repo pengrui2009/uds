@@ -15,6 +15,7 @@ add_library(udss SHARED
     uds_tp.c
     uds.c
     uds_phycan.c
+    socketcan.c
 )
 
 add_executable(uds_server

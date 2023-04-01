@@ -38,7 +38,7 @@ int can_init(int channel);
  * @param fr 
  * @return uint8_t 
  */
-uint8_t can_rx(uds_q_t *q, can_std_frame_t *fr);
+uint8_t can_rx(can_std_frame_t *fr);
 
 /**
  * @brief can tx frame
