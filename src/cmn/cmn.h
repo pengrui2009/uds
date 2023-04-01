@@ -11,7 +11,14 @@
 #ifndef CMN_H_
 #define CMN_H_
 
-enum Iso14229CANRxStatus { kCANRxNone = 0, kCANRxSome };
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+enum Iso14229CANRxStatus {
+    kCANRxNone = -1, 
+    kCANRxSome = 0
+};
 
 /*
 provide a debug function with -DISO14229USERDEBUG=printf when compiling this
@@ -28,5 +35,9 @@ library
         }                                                                                          \
         ISO14229USERDEBUG("\n");                                                                   \
     }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CMN_H_ */

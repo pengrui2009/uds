@@ -11,7 +11,7 @@
 
 
 #include "uds.h"
-
+#include <stdio.h>
 
 /**
  * @brief get a elem from queue
@@ -23,6 +23,7 @@
  */
 uds_q_rslt uds_qdequeue(uds_q_t *q, void *elem, uint16_t sz)
 {   
+
     if (q->qentries > 0) {
         // for (uint16_t i = 0; i < sz; i++) {
         //     *(uint8_t *)elem = *(uint8_t *)q->qout;
@@ -55,7 +56,8 @@ uds_q_rslt uds_qdequeue(uds_q_t *q, void *elem, uint16_t sz)
  * @return uds_q_rslt 
  */
 uds_q_rslt uds_qenqueue(uds_q_t *q, void *elem, uint16_t sz)
-{
+{    
+    
     if (q->qentries < q->qsize) {
         // for (uint16_t i = 0; i < sz; i++) {
         //     *(uint8_t *)q->qin = *(uint8_t *)elem;

@@ -414,7 +414,7 @@ void uds_service_0x10(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
                 }
                 break;
 
-            case EXTENDDIAGNOSITIC_SESSION:
+            case EXTENDDIAGNOSITIC_SESSION:                
                 pap->cur_ses = extendedDiagnosticSession;
                 pos_rsp_flag = true;
                 pap->cur_sec = SECURITY_LEVEL_0;

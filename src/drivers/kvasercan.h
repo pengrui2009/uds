@@ -1,5 +1,5 @@
 /**
- * @file uds_phycan.h
+ * @file kvasercan.h
  * @author rui.peng (pengrui_2009@163.com)
  * @brief 
  * @version 0.1
@@ -9,31 +9,35 @@
  * 
  */
 
-#ifndef UDS_DRV_CAN_H_
-#define UDS_DRV_CAN_H_
-
-#include "uds_q.h"
+#ifndef KVASER_CAN_H_
+#define KVASER_CAN_H_
 
 #include <stdint.h>
+#include <linux/can.h>
 
-#define UDS_DL_CAN_DL 8u
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// #define UDS_DL_CAN_DL 8u
 
 #define READ_WAIT_INFINITE      (unsigned long)(-1)
 #define WRITE_WAIT_INFINITE     (unsigned long)(-1)
 
-typedef struct {
-    uint16_t id;
-    uint16_t dlc;
-    uint8_t  dt[UDS_DL_CAN_DL];
-} can_std_frame_t;
+// typedef struct {
+//     uint16_t    id;
+//     uint16_t    dlc;
+//     uint8_t     dt[UDS_DL_CAN_DL];
+// } can_std_frame_t;
 
 /**
  * @brief can init
  * 
  * @param channel 
+ * @param dev
  * @return int 
  */
-int can_init(int channel);
+int can_init(int channel, char *dev);
 
 /**
  * @brief can receive frame
@@ -42,7 +46,7 @@ int can_init(int channel);
  * @param fr 
  * @return uint8_t 
  */
-uint8_t can_rx(uds_q_t *q, can_std_frame_t *fr);
+uint8_t can_rx(struct can_frame *frame_ptr);
 
 /**
  * @brief can tx frame
@@ -50,6 +54,10 @@ uint8_t can_rx(uds_q_t *q, can_std_frame_t *fr);
  * @param fr 
  * @return uint8_t 
  */
-uint8_t can_tx(can_std_frame_t *fr);
+uint8_t can_tx(const struct can_frame *frame_ptr);
 
-#endif /* UDS_DRV_CAN_H_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* KVASERCAN_H_ */

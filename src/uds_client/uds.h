@@ -12,11 +12,11 @@
 #define __UDS_H__
 
 #include "uds_ap.h"
-
+#include "virtual_socketcan.h"
 
 #include <stdio.h>
 #include <string.h>
-
+#include <linux/can.h>
 
 #define UDS_TP_Cs                (UDS_TP_Cr - UDS_TP_As)
 #define UDS_TP_Br                (UDS_TP_Bs - UDS_TP_Ar)
@@ -52,8 +52,8 @@ int uds_init(int channel);
 void uds_process(void);
 void uds_timer_tick(void);
 
-void uds_recv_frame(uds_q_t *q, can_std_frame_t fr);
-void uds_send_frame(can_std_frame_t *fr);
+void uds_recv_frame(uds_q_t *q, struct can_frame fr);
+void uds_send_frame(struct can_frame *fr);
 
 
 

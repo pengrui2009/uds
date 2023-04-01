@@ -11,7 +11,6 @@
 #ifndef UDS_Q_H_
 #define UDS_Q_H_
 
-
 #include <stdint.h>
 #include "cmn.h"
 

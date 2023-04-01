@@ -12,7 +12,7 @@
 
 #define UDS_GLOABL
 #include "uds.h"
-
+#include <linux/can.h>
 
 /**
  * @brief uds init
@@ -26,7 +26,7 @@ int uds_init(int channel)
 {
     int ret = 0;
     
-    if (can_init(channel))
+    if (can_init(channel, "vcan0"))
     {
         printf("can init failed!\n");
         return -1;
@@ -86,10 +86,10 @@ void uds_timer_tick(void)
  * @param q 
  * @param fr 
  */
-void uds_recv_frame(uds_q_t *q, can_std_frame_t fr) 
+void uds_recv_frame(uds_q_t *q, struct can_frame fr) 
 {
-    if (fr.id == UDS_TP_FUNCTION_ADDR || fr.id == UDS_TP_PHYSICAL_ADDR) {
-        uds_qenqueue(q, &fr, (uint16_t)(sizeof(can_std_frame_t)));
+    if (fr.can_id == UDS_TP_FUNCTION_ADDR || fr.can_id == UDS_TP_PHYSICAL_ADDR) {
+        uds_qenqueue(q, &fr, (uint16_t)(sizeof(struct can_frame)));
     }
 }
 
@@ -99,14 +99,14 @@ void uds_recv_frame(uds_q_t *q, can_std_frame_t fr)
  * 
  * @param fr 
  */
-void uds_send_frame(can_std_frame_t *fr)
+void uds_send_frame(struct can_frame *fr)
 {   
     uint8_t i;
     /* send action */
 #ifdef TEST_WIN32
     printf("can send:");
-    for (i = 0; i < fr->dlc; i++) {
-        printf("%02X ", fr->dt[i]);
+    for (i = 0; i < fr->can_dlc; i++) {
+        printf("%02X ", fr->data[i]);
     }
     printf("\n");
 #endif

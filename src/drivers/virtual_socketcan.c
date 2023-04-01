@@ -19,19 +19,23 @@
 #include <time.h>
 #include <unistd.h>
 
-int g_sockfd;                  // CAN socket FD
+// CAN socket FD
+static int sockfd = 0;
 bool port_should_exit = false; // flag for shutting down
 
 /**
  * @brief poll for CAN messages
  * @return 0 if message is present, -1 otherwise
  */
-enum Iso14229CANRxStatus portCANRxPoll(uint32_t *arb_id, uint8_t *data, uint8_t *size) {
+enum Iso14229CANRxStatus portCANRxPoll(uint32_t *arb_id, uint8_t *data, uint8_t *size) 
+{
     struct can_frame frame = {0};
     // printf("portCANRxPoll reading\n");
-    int nbytes = read(g_sockfd, &frame, sizeof(struct can_frame));
-    if (nbytes < 0) {
-        if (EAGAIN == errno || EWOULDBLOCK == errno) {
+    int nbytes = read(sockfd, &frame, sizeof(struct can_frame));
+    if (nbytes < 0) 
+    {
+        if (EAGAIN == errno || EWOULDBLOCK == errno) 
+        {
             // printf("portCANRxPoll kCANRxNone\n");
             return kCANRxNone;
         } else {
@@ -59,7 +63,7 @@ FILE *fd;
  */
 void teardown(int signum) {
     (void)signum;
-    if (close(g_sockfd) < 0) {
+    if (close(sockfd) < 0) {
         perror("failed to close socket");
         exit(-1);
     }
@@ -81,7 +85,7 @@ int portSendCAN(const uint32_t arbitration_id, const uint8_t *data, const uint8_
     frame.can_dlc = size;
     memmove(frame.data, data, size);
 
-    if (write(g_sockfd, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame)) {
+    if (write(sockfd, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame)) {
         perror("Write err");
         exit(-1);
     }
@@ -111,19 +115,19 @@ int portSetup(char *dev) {
         return -1;
     }
 
-    if ((g_sockfd = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW)) < 0) {
+    if ((sockfd = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW)) < 0) {
         perror("Socket");
         return -1;
     }
 
     strcpy(ifr.ifr_name, dev);
-    ioctl(g_sockfd, SIOCGIFINDEX, &ifr);
+    ioctl(sockfd, SIOCGIFINDEX, &ifr);
 
     memset(&addr, 0, sizeof(addr));
     addr.can_family = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
 
-    if (bind(g_sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         perror("Bind");
         return -1;
     }
@@ -178,4 +182,126 @@ void isotp_user_debug(const char *fmt, ...) {
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end(ap);
+}
+
+/**
+ * @brief can init
+ * 
+ * @param channel 
+ * @param dev 
+ * @return int 
+ */
+int can_init(int channel, char *dev)
+{
+    int result = 0;
+
+    (void)channel;
+
+    printf("port portSetup init dev:%s \n", dev);
+
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = teardown;
+    sigaction(SIGINT, &action, NULL);
+
+    if (dev == NULL)
+    {
+        printf("dev is NULL\n");
+        return -1;
+    }
+
+    if ((sockfd = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW)) < 0) {
+        perror("Socket");
+        return -1;
+    }
+
+    strcpy(ifr.ifr_name, dev);
+    ioctl(sockfd, SIOCGIFINDEX, &ifr);
+
+    memset(&addr, 0, sizeof(addr));
+    addr.can_family = AF_CAN;
+    addr.can_ifindex = ifr.ifr_ifindex;
+
+    if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        perror("Bind");
+        return -1;
+    }
+
+    // Try sending a message. This will fail if the network is down.
+    struct can_frame tx_frame = {
+        .can_id = 0x111,
+        .can_dlc = 4,
+        .data = {1, 2, 3, 4},
+    };
+
+    result = can_tx(&tx_frame);
+    if (result)
+    {
+        printf("can tx failed!\n");
+        return -1;
+    }
+
+    printf("listening on %s\n", dev);
+
+    return 0;
+}
+
+/**
+ * @brief can receive frame
+ * 
+ * @param q 
+ * @param fr 
+ * @return uint8_t 
+ */
+int can_rx(struct can_frame *frame_ptr)
+{
+    if (frame_ptr == NULL)    
+    {
+        printf("frrame_ptr is NULL!\b");
+        return -1;
+    }
+
+    // printf("portCANRxPoll reading\n");
+    int nbytes = read(sockfd, frame_ptr, sizeof(struct can_frame));
+    if (nbytes < 0) {
+        if (EAGAIN == errno || EWOULDBLOCK == errno) {
+            // printf("portCANRxPoll kCANRxNone\n");
+            return kCANRxNone;
+        } else {
+            perror("Read err");
+            exit(-1);
+        }
+    }
+    //*arb_id = frame.can_id;
+    //*size = frame.can_dlc;
+    //memmove(data, frame.data, *size);
+    printf("portRecvCAN send> 0x%03x: size:%d ", frame_ptr->can_id, frame_ptr->can_dlc);
+    PRINTHEX(frame_ptr->data, frame_ptr->can_dlc);
+    
+    return 0;
+}
+
+/**
+ * @brief can tx frame
+ * 
+ * @param fr 
+ * @return uint8_t 
+ */
+int can_tx(const struct can_frame *frame_ptr)
+{
+    if (frame_ptr == NULL)
+    {
+        printf("frame_ptr is NULL!\n");
+        return -1;
+    }
+
+    if (write(sockfd, frame_ptr, sizeof(struct can_frame)) != sizeof(struct can_frame))
+    {
+        perror("Write err");
+        exit(-1);
+    }
+    
+    printf("portSendCAN send> 0x%03x: size:%d ", frame_ptr->can_id, frame_ptr->can_dlc);
+    PRINTHEX(frame_ptr->data, frame_ptr->can_dlc);
+
+    return 0;
 }

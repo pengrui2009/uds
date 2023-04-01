@@ -6,6 +6,8 @@ project(uds LANGUAGES C)
 
 include_directories(
     $(CMAKE_CURRENT_SOURCE_DIR)
+    ../cmn
+    ../drivers
 )
 
 add_library(udsc SHARED
@@ -14,7 +16,6 @@ add_library(udsc SHARED
     uds_q.c
     uds_tp.c
     uds.c
-    can_drv.c
 )
 
 add_executable(uds_client
@@ -23,6 +24,8 @@ add_executable(uds_client
 
 target_link_libraries(uds_client
     udsc
+    virtualcan
+    kvasercan
     pthread
     canlib
 )

@@ -12,6 +12,7 @@
 #define __UDS_H__
 #include <stdio.h>
 #include <string.h>
+#include <linux/can.h>
 
 #include "uds_cfg.def"
 #define UDS_TP_Cs                (UDS_TP_Cr - UDS_TP_As)
@@ -102,16 +103,16 @@ typedef enum {
 } uds_dl_sts_t;
 
 
-typedef struct {
-    uint32_t    id;
-    uint16_t    dlc;
-    uint8_t     dt[UDS_DL_CAN_DL];
-} can_std_frame_t;
+// typedef struct {
+//     uint32_t    id;
+//     uint16_t    dlc;
+//     uint8_t     dt[UDS_DL_CAN_DL];
+// } can_std_frame_t;
 
 
 typedef struct {
     uds_dl_sts_t        sts;
-    can_std_frame_t     fr;
+    struct can_frame    fr;
 } uds_dl_iostream_t;
 
 
@@ -125,7 +126,7 @@ typedef struct {
     uds_dl_iostream_t  in;
     uds_dl_iostream_t  out;
     uds_q_t            in_qf;
-    can_std_frame_t    in_frs[UDS_DL_IN_SZ];
+    struct can_frame   in_frs[UDS_DL_IN_SZ];
 } uds_dl_layer_t;
 
 
@@ -473,7 +474,7 @@ UDS_EXT uds_ap_layer_t uds_ap;
  * 
  * @return int 
  */
-int uds_init(int channel);
+int uds_init();
 
 void uds_process(void);
 void uds_timer_tick(void);

@@ -30,7 +30,8 @@
 
 
 enum CANRxStatus { 
-    kCANRxNone = 0, kCANRxSome 
+    kCANRxNone = -1, 
+    kCANRxSome = 0
 };
 
 extern bool port_should_exit;

@@ -10,29 +10,27 @@
 ***********************************************************************/
 
 
-
 #define UDS_GLOABL
-#include "uds.h"
 
-#include "uds_phycan.h"
+#include "uds.h"
+// #include "uds_phycan.h"
+
+#include <stdio.h>
 
 /**
  * @brief uds init
  * 
- * @param channel : can channel(kvaser used)
  * @return int 
             0:      success 
             other:  failed
  */
-int uds_init(int channel) 
+int uds_init() 
 {
-    if (can_init(channel))
-    {
-        printf("uds can init failed\n");
-        return -1;
-    }
+
     uds_dl_init(&uds_dl);
+
     uds_tp_init(&uds_tp); 
+
     uds_ap_init(&uds_ap);
 
     return 0;

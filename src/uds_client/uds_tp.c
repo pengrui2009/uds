@@ -17,15 +17,15 @@
 static void uds_tp_process_wc_to(void *ptp);
 static void uds_tp_process_wf_to(void *ptp);
 
-static void uds_tp_process_in_sf(uds_tp_layer_t *ptp, can_std_frame_t *pfr);
-static void uds_tp_process_in_ff(uds_tp_layer_t *ptp, can_std_frame_t *pfr);
-static void uds_tp_process_in_cf(uds_tp_layer_t *ptp, can_std_frame_t *pfr);
-static void uds_tp_process_in_fc(uds_tp_layer_t *ptp, can_std_frame_t *pfr);
+static void uds_tp_process_in_sf(uds_tp_layer_t *ptp, struct can_frame *pfr);
+static void uds_tp_process_in_ff(uds_tp_layer_t *ptp, struct can_frame *pfr);
+static void uds_tp_process_in_cf(uds_tp_layer_t *ptp, struct can_frame *pfr);
+static void uds_tp_process_in_fc(uds_tp_layer_t *ptp, struct can_frame *pfr);
 
-static void uds_tp_process_out_sf(uds_tp_layer_t *ptp, can_std_frame_t *pfr);
-static void uds_tp_process_out_ff(uds_tp_layer_t *ptp, can_std_frame_t *pfr);
-static void uds_tp_process_out_cf(uds_tp_layer_t *ptp, can_std_frame_t *pfr);
-static void uds_tp_process_out_fc(uds_tp_layer_t *ptp, can_std_frame_t *pfr);
+static void uds_tp_process_out_sf(uds_tp_layer_t *ptp, struct can_frame *pfr);
+static void uds_tp_process_out_ff(uds_tp_layer_t *ptp, struct can_frame *pfr);
+static void uds_tp_process_out_cf(uds_tp_layer_t *ptp, struct can_frame *pfr);
+static void uds_tp_process_out_fc(uds_tp_layer_t *ptp, struct can_frame *pfr);
 
 
 /**
@@ -71,9 +71,9 @@ void uds_tp_init(uds_tp_layer_t *ptp)
 void uds_tp_process_in(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
 {   
     if (pdl->in.sts == L_STS_READY) {
-        ptp->in.pci.pt = (pdl->in.fr.dt[0] & 0xF0u) >> 4;
+        ptp->in.pci.pt = (pdl->in.fr.data[0] & 0xF0u) >> 4;
 
-        if (pdl->in.fr.id == UDS_TP_PHYSICAL_ADDR) {
+        if (pdl->in.fr.can_id == UDS_TP_PHYSICAL_ADDR) {
             ptp->in.pci.tt = N_TATYPE_PHYSICAL;
         } else {
             ptp->in.pci.tt = N_TATYPE_FUNCTIONAL;
@@ -112,7 +112,7 @@ void uds_tp_process_in(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
 void uds_tp_process_out(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
 {   
     /* fill the data link layer to fill the invalid byte with 0xAA */
-    memset((uint8_t *)pdl->out.fr.dt, UDS_FILL_VALUE, UDS_DL_CAN_DL);
+    memset((uint8_t *)pdl->out.fr.data, UDS_FILL_VALUE, UDS_DL_CAN_DL);
 
     switch (ptp->out.sts) {
         case N_STS_IDLE:
@@ -185,15 +185,15 @@ static void uds_tp_process_wf_to(void *ptp)
  * @param ptp 
  * @param pfr 
  */
-static void uds_tp_process_in_sf(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
+static void uds_tp_process_in_sf(uds_tp_layer_t *ptp, struct can_frame* pfr)
 {
     // if (ptp->out.sts == N_STS_IDLE) {
     if (ptp->in.sts != N_STS_REDAY) {
-        ptp->in.pci.dl = pfr->dt[0] & 0x0Fu;
+        ptp->in.pci.dl = pfr->data[0] & 0x0Fu;
         if (ptp->in.pci.dl > 7) {
             ptp->in.sts = N_STS_ERROR;
         } else {
-            memcpy(ptp->in.buf, &pfr->dt[1], ptp->in.pci.dl);
+            memcpy(ptp->in.buf, &pfr->data[1], ptp->in.pci.dl);
             ptp->in.sts = N_STS_REDAY;
         }
     }
@@ -206,12 +206,12 @@ static void uds_tp_process_in_sf(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
  * @param ptp 
  * @param pfr 
  */
-static void uds_tp_process_in_ff(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
+static void uds_tp_process_in_ff(uds_tp_layer_t *ptp, struct can_frame* pfr)
 {
     // if (ptp->out.sts == N_STS_IDLE) {
     if (ptp->in.sts != N_STS_REDAY) {
         ptp->in.cf_cnt  = 0;
-        ptp->in.pci.dl = (uint16_t)(((pfr->dt[0] & 0xFu) << 8) + pfr->dt[1]);
+        ptp->in.pci.dl = (uint16_t)(((pfr->data[0] & 0xFu) << 8) + pfr->data[1]);
         
         /* send a flow contorl fr */
         if (ptp->in.pci.dl > UDS_TP_BUF_SZ) {
@@ -229,7 +229,7 @@ static void uds_tp_process_in_ff(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
             ptp->out.pci.bs = ptp->in.cfg.bs;
             ptp->out.pci.stmin = ptp->in.cfg.stmin;
 
-            memcpy(ptp->in.buf, &pfr->dt[2], 6);
+            memcpy(ptp->in.buf, &pfr->data[2], 6);
             ptp->in.buf_pos = 6;
             ptp->in.sts = N_STS_BUSY;
         }
@@ -243,7 +243,7 @@ static void uds_tp_process_in_ff(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
  * @param ptp 
  * @param pfr 
  */
-static void uds_tp_process_in_cf(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
+static void uds_tp_process_in_cf(uds_tp_layer_t *ptp, struct can_frame* pfr)
 {   
     uint16_t sz;
     
@@ -252,12 +252,12 @@ static void uds_tp_process_in_cf(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
 
         ptp->in.ptmr_wc->st = false;
 
-        ptp->in.pci.sn = pfr->dt[0] & 0x0Fu;
+        ptp->in.pci.sn = pfr->data[0] & 0x0Fu;
         ptp->in.cf_cnt++;
         if ((ptp->in.cf_cnt % 0x10) == ptp->in.pci.sn) {
             /* put the bus fr to buf */
             sz = (ptp->in.pci.dl - ptp->in.buf_pos < 7) ? (ptp->in.pci.dl - ptp->in.buf_pos) : 7;
-            memcpy(&ptp->in.buf[ptp->in.buf_pos], &pfr->dt[1], sz);
+            memcpy(&ptp->in.buf[ptp->in.buf_pos], &pfr->data[1], sz);
             ptp->in.buf_pos += sz;
             if (ptp->in.buf_pos < ptp->in.pci.dl) {
                 /* ignore check because the uds tp set bs = 0 */
@@ -293,10 +293,10 @@ static void uds_tp_process_in_cf(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
  * @param ptp 
  * @param pfr 
  */
-static void uds_tp_process_in_fc(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
+static void uds_tp_process_in_fc(uds_tp_layer_t *ptp, struct can_frame* pfr)
 {   
     if (ptp->out.sts == N_STS_BUSY_WAIT) {
-        ptp->in.pci.fs = pfr->dt[0] & 0x0Fu;
+        ptp->in.pci.fs = pfr->data[0] & 0x0Fu;
 
         // stop the wf timer
         ptp->out.ptmr_wf->st = false;
@@ -306,8 +306,8 @@ static void uds_tp_process_in_fc(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
                 ptp->out.pci.pt = N_PCI_CF;
                 ptp->out.sts = N_STS_BUSY;
                 ptp->out.wf_cnt = 0;
-                ptp->in.pci.bs = pfr->dt[1];
-                ptp->in.pci.stmin = pfr->dt[2];
+                ptp->in.pci.bs = pfr->data[1];
+                ptp->in.pci.stmin = pfr->data[2];
 
                 ptp->out.cfg.fs = ptp->in.pci.fs;
                 ptp->out.cfg.bs = ptp->in.pci.bs;
@@ -348,10 +348,10 @@ static void uds_tp_process_in_fc(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
  * @param ptp 
  * @param pfr 
  */
-static void uds_tp_process_out_sf(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
+static void uds_tp_process_out_sf(uds_tp_layer_t *ptp, struct can_frame* pfr)
 {
-    pfr->dt[0] = (uint8_t)(ptp->out.pci.dl);
-    memcpy(&pfr->dt[1], ptp->out.buf, ptp->out.pci.dl);
+    pfr->data[0] = (uint8_t)(ptp->out.pci.dl);
+    memcpy(&pfr->data[1], ptp->out.buf, ptp->out.pci.dl);
     ptp->out.sts = N_STS_IDLE;
 }
 
@@ -362,11 +362,11 @@ static void uds_tp_process_out_sf(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
  * @param ptp 
  * @param pfr 
  */
-static void uds_tp_process_out_ff(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
+static void uds_tp_process_out_ff(uds_tp_layer_t *ptp, struct can_frame* pfr)
 {
-    pfr->dt[0] = (uint8_t)(0x10u + (ptp->out.pci.dl >> 8));
-    pfr->dt[1] = (uint8_t)(ptp->out.pci.dl & 0xFFu);
-    memcpy(&pfr->dt[2], ptp->out.buf, 6);
+    pfr->data[0] = (uint8_t)(0x10u + (ptp->out.pci.dl >> 8));
+    pfr->data[1] = (uint8_t)(ptp->out.pci.dl & 0xFFu);
+    memcpy(&pfr->data[2], ptp->out.buf, 6);
     ptp->out.buf_pos = 6;
 
     ptp->out.cf_cnt = 0;
@@ -386,7 +386,7 @@ static void uds_tp_process_out_ff(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
  * @param ptp 
  * @param pfr 
  */
-static void uds_tp_process_out_cf(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
+static void uds_tp_process_out_cf(uds_tp_layer_t *ptp, struct can_frame* pfr)
 {
     uint16_t sz;
 
@@ -394,9 +394,9 @@ static void uds_tp_process_out_cf(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
     
     ptp->out.cf_cnt++;
     ptp->out.pci.sn = (ptp->out.pci.sn + 1 > 0xF) ? 0 : (ptp->out.pci.sn + 1);
-    pfr->dt[0] = (uint8_t)(0x20u + ptp->out.pci.sn);
+    pfr->data[0] = (uint8_t)(0x20u + ptp->out.pci.sn);
     
-    memcpy(&pfr->dt[1], &ptp->out.buf[ptp->out.buf_pos], sz);
+    memcpy(&pfr->data[1], &ptp->out.buf[ptp->out.buf_pos], sz);
     
     ptp->out.buf_pos += sz;
 
@@ -418,11 +418,11 @@ static void uds_tp_process_out_cf(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
  * @param ptp 
  * @param pfr 
  */
-static void uds_tp_process_out_fc(uds_tp_layer_t *ptp, can_std_frame_t* pfr)
+static void uds_tp_process_out_fc(uds_tp_layer_t *ptp, struct can_frame* pfr)
 {
-    pfr->dt[0] = (uint8_t)(0x30u + ptp->out.pci.fs);
-    pfr->dt[1] = (uint8_t)(ptp->out.pci.bs);
-    pfr->dt[2] = (uint8_t)(ptp->out.pci.stmin);
+    pfr->data[0] = (uint8_t)(0x30u + ptp->out.pci.fs);
+    pfr->data[1] = (uint8_t)(ptp->out.pci.bs);
+    pfr->data[2] = (uint8_t)(ptp->out.pci.stmin);
 
     ptp->out.sts = N_STS_IDLE;
 

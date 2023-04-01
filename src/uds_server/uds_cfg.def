@@ -24,9 +24,9 @@
 #define UDS_TP_STmin                10u
 #define UDS_TP_BS                   0u
 
-#define UDS_TP_FUNCTION_ADDR        0x702u
-#define UDS_TP_PHYSICAL_ADDR        0x701u
-#define UDS_TP_TRANSPORT_ADDR       0x700u
+#define UDS_TP_FUNCTION_ADDR        0x18DBFFF9
+#define UDS_TP_PHYSICAL_ADDR        0x18DA1EF9
+#define UDS_TP_TRANSPORT_ADDR       0x18DAF91E
 
 #define UDS_FILL_VALUE              0xAAu
 
