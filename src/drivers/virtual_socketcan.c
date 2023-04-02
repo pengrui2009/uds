@@ -1,4 +1,3 @@
-#include "cmn.h"
 #include "virtual_socketcan.h"
 #include <errno.h>
 #include <error.h>
@@ -274,9 +273,14 @@ int can_rx(struct can_frame *frame_ptr)
     //*arb_id = frame.can_id;
     //*size = frame.can_dlc;
     //memmove(data, frame.data, *size);
-    printf("portRecvCAN send> 0x%03x: size:%d ", frame_ptr->can_id, frame_ptr->can_dlc);
-    PRINTHEX(frame_ptr->data, frame_ptr->can_dlc);
-    
+    printf("portRecvCAN receive> 0x%03x: size:%d ", frame_ptr->can_id, frame_ptr->can_dlc);
+    // PRINTHEX(frame_ptr->data, frame_ptr->can_dlc);
+    for (int i=0; i<frame_ptr->can_dlc; i++)
+    {
+        printf("%02X ", frame_ptr->data[i]);
+    }
+    printf("\n");
+
     return 0;
 }
 
@@ -301,7 +305,12 @@ int can_tx(const struct can_frame *frame_ptr)
     }
     
     printf("portSendCAN send> 0x%03x: size:%d ", frame_ptr->can_id, frame_ptr->can_dlc);
-    PRINTHEX(frame_ptr->data, frame_ptr->can_dlc);
+    for (int i=0; i<frame_ptr->can_dlc; i++)
+    {
+        printf("%02X ", frame_ptr->data[i]);
+    }
+    printf("\n");
+    // PRINTHEX(frame_ptr->data, frame_ptr->can_dlc);
 
     return 0;
 }

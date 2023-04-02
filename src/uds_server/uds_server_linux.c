@@ -6,7 +6,7 @@
  * ==========  =========  ========= =======================================
  * 2022-04-24  V1.0       Wcy       Create
  *
- * @Copyright (C)  2022  Jixing. all right reserved
+ * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 #include "uds.h"
 #include "uds_cfg.def"

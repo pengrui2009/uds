@@ -6,7 +6,7 @@
  * ==========  =========  ========= =======================================
  * 2022-04-15  V1.0       Wcy       Create
  *
- * @Copyright (C)  2022  Jixing. all right reserved
+ * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 
 #include "uds.h"
@@ -524,22 +524,30 @@ void uds_service_0x27(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
     /* suppressPosRspMsgIndicationBit must be 0 */
     pap->sup_pos_rsp = false;
 
+    // handle sec_ctrl
+    const uds_ap_service_t *service_ptr = uds_service_find(SecurityAccess);
+    if (pap->cur_ses & service_ptr->spt_ses)
+    {
+        uds_ap_process_sadelay_to(pap);
+    }
+    
     if (pap->sec_ctrl.enable == true) {
 
         switch (ptp->in.buf[1]) {
             case REQUEST_SEED1:
+                printf("ptp->in.pci.dl:%d pap->cur_sec:%d\n", ptp->in.pci.dl, pap->cur_sec);
                 if (ptp->in.pci.dl == 2) {
                     if (!pap->sec_ctrl.try_max) {
-                        if (pap->cur_sec != SECURITY_LEVEL_1) {
+                        //if (pap->cur_sec != SECURITY_LEVEL_1) {
                             pap->sec_ctrl.sds_recv.bit.sd1_recv = 0x1u;
                             pap->sec_ctrl.seed[0] = 0x12u;
                             pap->sec_ctrl.seed[1] = 0x34u;
 
-                        } else {
-                            pap->sec_ctrl.seed[0] = 0x00u;
-                            pap->sec_ctrl.seed[1] = 0x00u;
+                        // } else {
+                        //     pap->sec_ctrl.seed[0] = 0x00u;
+                        //     pap->sec_ctrl.seed[1] = 0x00u;
 
-                        }
+                        // }
                         ptp->out.buf[2] = pap->sec_ctrl.seed[0];
                         ptp->out.buf[3] = pap->sec_ctrl.seed[1];
                         ptp->out.pci.dl = 4u;
@@ -557,7 +565,7 @@ void uds_service_0x27(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
             case REQUEST_SEED2:
                 if (ptp->in.pci.dl == 2) {
                     if (!pap->sec_ctrl.try_max) {
-                        if (pap->cur_sec != SECURITY_LEVEL_2) {
+                        if (pap->cur_sec != SECURITY_LEVEL_1) {
                             pap->sec_ctrl.sds_recv.bit.sd2_recv = 0x1u;
                             pap->sec_ctrl.seed[0] = 0x12u;
                             pap->sec_ctrl.seed[1] = 0x34u;
@@ -583,7 +591,7 @@ void uds_service_0x27(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
             case REQUEST_SEED3:
                 if (ptp->in.pci.dl == 2) {
                     if (!pap->sec_ctrl.try_max) {
-                        if (pap->cur_sec != SECURITY_LEVEL_3) {
+                        if (pap->cur_sec != SECURITY_LEVEL_2) {
                             pap->sec_ctrl.sds_recv.bit.sd3_recv = 0x1u;
                             pap->sec_ctrl.seed[0] = 0x12u;
                             pap->sec_ctrl.seed[1] = 0x34u;
@@ -610,11 +618,12 @@ void uds_service_0x27(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
                 break;
 
             case REQUEST_KEY1:
+                printf("ptp->in.pci.dl:%d pap->sec_ctrl.sds_recv.bit.sd1_recv:%d\n", ptp->in.pci.dl, pap->sec_ctrl.sds_recv.bit.sd1_recv);
                 if (ptp->in.pci.dl == 4) {
                     if (pap->sec_ctrl.sds_recv.bit.sd1_recv == 1) {
                         /* todo : caculate the key */
-                        pap->sec_ctrl.key[0] = 0x99;
-                        pap->sec_ctrl.key[1] = 0x11;
+                        pap->sec_ctrl.key[0] = 0x12;
+                        pap->sec_ctrl.key[1] = 0x34;
                         if (pap->sec_ctrl.key[0] == ptp->in.buf[2] && pap->sec_ctrl.key[1] == ptp->in.buf[3]) {
                             ptp->out.pci.dl = 2u;
                             pap->cur_sec = SECURITY_LEVEL_1;

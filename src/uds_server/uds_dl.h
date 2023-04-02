@@ -23,7 +23,7 @@
  *  only support the classic can and standard id
  */
 #define UDS_DL_CAN_DL                   8u
-#define UDS_DL_IN_SZ                    24u
+#define UDS_DL_IN_SZ                    10u
 
 // only support the standard can bus 
 typedef enum {

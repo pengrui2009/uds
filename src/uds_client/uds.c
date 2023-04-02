@@ -6,7 +6,7 @@
  * ==========  =========  ========= =======================================
  * 2022-04-12  V1.0       Wcy       Create
  *
- * @Copyright (C)  2022  Jixing. all right reserved
+ * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 
 
@@ -18,15 +18,16 @@
  * @brief uds init
  * 
  * @param channel 
+ * @param dev
  * @return int 
             0   : success
             <0  : failed
  */
-int uds_init(int channel) 
+int uds_init(int channel, char *dev) 
 {
     int ret = 0;
     
-    if (can_init(channel, "vcan0"))
+    if (can_init(channel, dev))
     {
         printf("can init failed!\n");
         return -1;
@@ -46,13 +47,21 @@ int uds_init(int channel)
  */
 void uds_process(void)
 {
-    uds_dl_process_out(&uds_dl);
+    // uds_tp_process_in(&uds_tp, &uds_dl);
+    
     uds_tp_process_out(&uds_tp, &uds_dl);
 
-    uds_ap_process(&uds_ap, &uds_tp);
-    
+    uds_dl_process_out(&uds_dl);
+
+    // 
     uds_dl_process_in(&uds_dl);
+
     uds_tp_process_in(&uds_tp, &uds_dl);
+    
+    uds_ap_process(&uds_ap, &uds_tp);
+
+    
+    
 }
 
 
@@ -70,6 +79,7 @@ void uds_timer_tick(void)
         tmr = &uds_timer[i];
         if (tmr->st == true) {
             // when timer is expired, execute the action and stop the timer.
+            printf("tmr->cnt:%d\n", tmr->cnt);
             if (--tmr->cnt == 0) {
                 tmr->act(tmr->parg);
                 tmr->cnt = tmr->val;
@@ -159,11 +169,14 @@ void udsapp_nrsp_process(uint8_t svcid, uint8_t nrsp);
  * 
  * @param func  : sub function code
  * @param sprsp : suppress response from server
+ * @return int 
  */
-void uds_req_diagnostic_session(uint8_t func, uint8_t sprsp)
+int uds_req_diagnostic_session(uint8_t func, uint8_t sprsp)
 {
     memset(&uds_tp, 0x00, sizeof(uds_tp));
     memset(&uds_dl, 0x00, sizeof(uds_dl));
+
+    uds_ap.sts = A_STS_BUSY;
 
     // uds_tp.in.cf_cnt;
     // uds_tp.in.cfg;
@@ -183,8 +196,9 @@ void uds_req_diagnostic_session(uint8_t func, uint8_t sprsp)
     // uds_tp.out.wf_cnt;
     // uds_tp.out.wf_max;
 
-    uds_tp.out.buf[0] = 0x10;
+    uds_tp.out.buf[0] = DiagnosticSessionControl;
 
+    printf("func:%d\n", func);
     if (func == 0x01)
     {
         uds_tp.out.buf[1] = 0x01;
@@ -203,13 +217,18 @@ void uds_req_diagnostic_session(uint8_t func, uint8_t sprsp)
         uds_tp.out.buf[1] = 0x01 + 0x80;
     }
 
-    uds_tp_process_out(&uds_tp, &uds_dl);
+    while(uds_ap_process(&uds_ap, &uds_tp))
+    {
+        uds_tp_process_out(&uds_tp, &uds_dl);
 
-    uds_dl_process_out(&uds_dl);
+        uds_dl_process_out(&uds_dl);
 
-    uds_dl_process_in(&uds_dl);
-    
-    uds_tp_process_in(&uds_tp, &uds_dl);
+        uds_dl_process_in(&uds_dl);
+        
+        uds_tp_process_in(&uds_tp, &uds_dl);
+
+        
+    }
 
 }
 

@@ -6,7 +6,7 @@
  * ==========  =========  ========= =======================================
  * 2022-04-24  V1.0       Wcy       Create
  *
- * @Copyright (C)  2022  Jixing. all right reserved
+ * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 
 
@@ -73,12 +73,12 @@ void uds_tp_process_in(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
     if (pdl->in.sts == L_STS_READY) {
         ptp->in.pci.pt = (pdl->in.fr.data[0] & 0xF0u) >> 4;
 
-        if (pdl->in.fr.can_id == UDS_TP_PHYSICAL_ADDR) {
+        if (pdl->in.fr.can_id == UDS_TP_TRANSPORT_ADDR) {
             ptp->in.pci.tt = N_TATYPE_PHYSICAL;
         } else {
             ptp->in.pci.tt = N_TATYPE_FUNCTIONAL;
         }
-
+        printf("ptp->in.pci.pt:%d ptp->in.pci.tt:%d\n", ptp->in.pci.pt, ptp->in.pci.tt);
         switch (ptp->in.pci.pt) {
             case N_PCI_CF:
                 uds_tp_process_in_cf(ptp, &pdl->in.fr);
@@ -111,6 +111,7 @@ void uds_tp_process_in(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
  */
 void uds_tp_process_out(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
 {   
+
     /* fill the data link layer to fill the invalid byte with 0xAA */
     memset((uint8_t *)pdl->out.fr.data, UDS_FILL_VALUE, UDS_DL_CAN_DL);
 
@@ -125,7 +126,7 @@ void uds_tp_process_out(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
             }
         case N_STS_BUSY:
             switch (ptp->out.pci.pt) {
-                case N_PCI_SF:
+                case N_PCI_SF:                    
                     uds_tp_process_out_sf(ptp, &pdl->out.fr);
                     pdl->out.sts = L_STS_READY;
                     break;
@@ -352,6 +353,7 @@ static void uds_tp_process_out_sf(uds_tp_layer_t *ptp, struct can_frame* pfr)
 {
     pfr->data[0] = (uint8_t)(ptp->out.pci.dl);
     memcpy(&pfr->data[1], ptp->out.buf, ptp->out.pci.dl);
+    pfr->can_dlc = ptp->out.pci.dl+1;
     ptp->out.sts = N_STS_IDLE;
 }
 

@@ -16,7 +16,27 @@ extern "C" {
 //     uint16_t    dlc;
 //     uint8_t     dt[UDS_DL_CAN_DL];
 // } can_std_frame_t;
+enum Iso14229CANRxStatus 
+{
+    kCANRxNone = -1, 
+    kCANRxSome = 0
+};
 
+/*
+provide a debug function with -DISO14229USERDEBUG=printf when compiling this
+library
+*/
+#ifndef ISO14229USERDEBUG
+#define ISO14229USERDEBUG(fmt, ...) ((void)fmt)
+#endif
+
+#define PRINTHEX(addr, len)                                                                        \
+    {                                                                                              \
+        for (int i = 0; i < len; i++) {                                                            \
+            ISO14229USERDEBUG("%02x,", addr[i]);                                                   \
+        }                                                                                          \
+        ISO14229USERDEBUG("\n");                                                                   \
+    }
 
 extern bool port_should_exit;
 int portSetup(char *dev);

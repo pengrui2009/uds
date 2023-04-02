@@ -42,7 +42,7 @@ void* thread_entry(void *arg)
         timerCount++;
         uds_timer_tick();
         // printf("timer: %ud\n", timerCount);
-        usleep(10000);
+        usleep(1000);
     }
 
     return (void *)NULL;
@@ -62,7 +62,7 @@ int main()
     // signal(SIGINT, sighand);
     // siginterrupt(SIGINT, 1);
 
-    ret = uds_init(0);
+    ret = uds_init(0, "vcan0");
     if (ret)
     {
         printf("uds init failed\n");
@@ -80,38 +80,44 @@ int main()
         return -1;
     }
     
-	while (true){
-        if (timerCount > SECURITYACCESS_DELAY_TIME) {
-            if (fr_i < FR_NUM) {
-                printf("fr_i:%d\n", fr_i);
-                // can_std_frame_t fr = {
-                //     .id = 0,
-                //     .dlc = 0,
-                //     .dt = {0},
-                // };
+	// while (true){
+    //     if (timerCount > SECURITYACCESS_DELAY_TIME) {
+    //         if (fr_i < FR_NUM) {
+    //             printf("fr_i:%d\n", fr_i);
+    //             // can_std_frame_t fr = {
+    //             //     .id = 0,
+    //             //     .dlc = 0,
+    //             //     .dt = {0},
+    //             // };
                 
-                ret = can_tx(&fr[fr_i]);
-                if (ret)
-                {
-                    continue;
-                }
+    //             ret = can_tx(&fr[fr_i]);
+    //             if (ret)
+    //             {
+    //                 continue;
+    //             }
                 
-                // if (fr.id != 0x7e2)
-                // {
-                //     continue;
-                // }
-            } else {
-                stop = true;
-            }
-        }
-        uds_process();
+    //             // if (fr.id != 0x7e2)
+    //             // {
+    //             //     continue;
+    //             // }
+    //         } else {
+    //             stop = true;
+    //         }
+    //     }
+    //     uds_process();
 
-        if ((!uds_dl.in_qf.qentries) && stop) {
-            break;
-        }
+    //     if ((!uds_dl.in_qf.qentries) && stop) {
+    //         break;
+    //     }
 
+    // }
+    // pthread_join(tid, NULL);
+    ret = uds_req_diagnostic_session(EXTENDDIAGNOSITIC_SESSION, 0);
+    if (ret)
+    {
+        printf("uds_req_diagnostic_session failed, ret:%d\n", ret);
+        return -1;
     }
-    pthread_join(tid, NULL);
 
     return 0;
 }

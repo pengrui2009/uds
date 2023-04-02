@@ -11,6 +11,8 @@ include_directories(
     ../drivers
 )
 
+link_directories (${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+
 add_library(udss SHARED
     uds_ap.c
     uds_dl.c

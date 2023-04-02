@@ -6,7 +6,7 @@
  * ==========  =========  ========= =======================================
  * 2022-04-24  V1.0       Wcy       Create
  *
- * @Copyright (C)  2022  Jixing. all right reserved
+ * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 
 #include "uds_dl.h"
@@ -14,6 +14,7 @@
 #include "virtual_socketcan.h"
 
 #include <stdio.h>
+#include <string.h>
 
 /**
  * @brief 

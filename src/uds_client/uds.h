@@ -6,7 +6,7 @@
  * ==========  =========  ========= =======================================
  * 2022-04-12  V1.0       Wcy       Create
  *
- * @Copyright (C)  2022  Jixing. all right reserved
+ * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 #ifndef __UDS_H__
 #define __UDS_H__
@@ -47,14 +47,28 @@ UDS_EXT uds_dl_layer_t uds_dl;
 UDS_EXT uds_tp_layer_t uds_tp;
 UDS_EXT uds_ap_layer_t uds_ap;
 
+/**
+ * @brief uds_init
+ * 
+ * @param channel 
+ * @param dev 
+ * @return int 
+ */
+int uds_init(int channel, char *dev);
 
-int uds_init(int channel);
 void uds_process(void);
 void uds_timer_tick(void);
 
 void uds_recv_frame(uds_q_t *q, struct can_frame fr);
 void uds_send_frame(struct can_frame *fr);
 
-
+/**
+ * @brief uds request diagnostic session
+ * 
+ * @param func 
+ * @param sprsp 
+ * @return int 
+ */
+int uds_req_diagnostic_session(uint8_t func, uint8_t sprsp);
 
 #endif // __UDS_H__

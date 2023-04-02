@@ -6,13 +6,13 @@
  * ==========  =========  ========= =======================================
  * 2022-04-15  V1.0       Wcy       Create
  *
- * @Copyright (C)  2022  Jixing. all right reserved
+ * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 
 
 #include "uds_ap.h"
-
-
+#include <stdio.h>
+#include <string.h>
 
 static void uds_ap_process_s3_to(void *pap);
 static void uds_ap_process_sadelay_to(void *pap);
@@ -286,6 +286,7 @@ void uds_ap_init(uds_ap_layer_t *pap)
     pap->cur_ses = defaultSession;
     pap->cur_sec = SECURITY_LEVEL_0;
 
+    pap->sts = A_STS_BUSY;
     pap->sup_pos_rsp = false;
 
     pap->ptmr_s3 = &uds_timer[UDS_A_S3_IND];
@@ -312,44 +313,89 @@ void uds_ap_init(uds_ap_layer_t *pap)
  * @param pap 
  * @param ptp 
  */
-void uds_ap_process(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-{   
-    const uds_ap_service_t *uds_service_ptr;
-    
-    if (ptp->out.sts == N_STS_IDLE) {
-        if (ptp->in.sts == N_STS_REDAY) {
-
-            // find the sid in uds_service_list
-            uds_service_ptr = uds_service_find(ptp->in.buf[0]);
-            
-            // check if sid in uds_service_list
-            if (uds_service_ptr != (uds_ap_service_t *)0) {
-                printf("sid:%d uds_service find\n", ptp->in.buf[0]);
-                // current session is satisfied for sid
-                if (uds_service_ptr->spt_ses & pap->cur_ses) {
-                    // current security is satisfied for sid
-                    if (uds_service_ptr->spt_sec > pap->cur_sec) {
-                        uds_service_response_negative(pap, ptp, securityAccessDenied);
-                    } else {
-                        /* do the routine */
-                        uds_service_ptr->srv_rte(pap, ptp);
-                    }
-                } else {
-                    // current session is not supported in service
-                    uds_service_response_negative(pap, ptp, serviceNotSupportedInActiveSession);
-                }
-            } else {
-                // there is no service 
-                uds_service_response_negative(pap, ptp, serviceNotSupported);
-            }
-
-            ptp->in.sts = N_STS_IDLE;
-
-        } else if (ptp->in.sts == N_STS_ERROR) {
-            ptp->in.sts = N_STS_IDLE;
-        }
+int uds_ap_process(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
+    if (pap->sts != A_STS_BUSY)
+    {
+        printf("timeout!\n");
+        return 0;
     }
+
+    if (ptp->in.sts == N_STS_REDAY)
+    {
+        printf("uds_ap_process:");
+        for (int i=0; i<ptp->in.pci.dl; i++)
+        {
+            printf("%02X ", ptp->in.buf[i]);
+        }
+        printf("\n");
+
+        if (ptp->in.pci.dl)
+        {
+            if (0x7F == ptp->in.buf[0]) {
+                // if (kRequestCorrectlyReceived_ResponsePending == resp->buf[2]) {
+                //     ISO14229USERDEBUG("got RCRRP, setting p2 timer\n");
+                //     client->p2_timer = client->userGetms() + client->p2_star_ms;
+                //     client->state = kRequestStateSentAwaitResponse;
+                // }
+            } else {
+                uint8_t respSid = ptp->in.buf[0];
+                switch (REQUEST_SID_OF(respSid)) 
+                {
+                    case DiagnosticSessionControl: 
+                    {
+                        uds_service_0x10(pap, ptp);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // return 0;
+    }
+    // handle response data
+
+
+    return 1;
 }
+// void uds_ap_process(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+// {   
+//     const uds_ap_service_t *uds_service_ptr;
+    
+//     if (ptp->out.sts == N_STS_IDLE) {
+//         if (ptp->in.sts == N_STS_REDAY) {
+
+//             // find the sid in uds_service_list
+//             uds_service_ptr = uds_service_find(ptp->in.buf[0]);
+            
+//             // check if sid in uds_service_list
+//             if (uds_service_ptr != (uds_ap_service_t *)0) {
+//                 printf("sid:%d uds_service find\n", ptp->in.buf[0]);
+//                 // current session is satisfied for sid
+//                 if (uds_service_ptr->spt_ses & pap->cur_ses) {
+//                     // current security is satisfied for sid
+//                     if (uds_service_ptr->spt_sec > pap->cur_sec) {
+//                         uds_service_response_negative(pap, ptp, securityAccessDenied);
+//                     } else {
+//                         /* do the routine */
+//                         uds_service_ptr->srv_rte(pap, ptp);
+//                     }
+//                 } else {
+//                     // current session is not supported in service
+//                     uds_service_response_negative(pap, ptp, serviceNotSupportedInActiveSession);
+//                 }
+//             } else {
+//                 // there is no service 
+//                 uds_service_response_negative(pap, ptp, serviceNotSupported);
+//             }
+
+//             ptp->in.sts = N_STS_IDLE;
+
+//         } else if (ptp->in.sts == N_STS_ERROR) {
+//             ptp->in.sts = N_STS_IDLE;
+//         }
+//     }
+// }
 
 
 /**
@@ -372,7 +418,8 @@ static void uds_ap_process_s3_to(void *pap)
  */
 static void uds_ap_process_sadelay_to(void *pap)
 {
-    ((uds_ap_layer_t *)pap)->sec_ctrl.enable = true;
+    ((uds_ap_layer_t *)pap)->sts = A_STS_ERROR;
+    ((uds_ap_layer_t *)pap)->sec_ctrl.enable = true;    
 }
 
 
@@ -1229,6 +1276,515 @@ void uds_service_0x37(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 // }
 
 
+
+/**
+ * @brief Called at periodic tick rate
+ * 
+ */
+void udsapp_update(void)
+{
+
+}
+
+/**
+ * @brief Processes received messages.
+ * 
+ * @param msg 
+ */
+// void udsapp_process(i15765_t *msg)
+// {
+//
+// }
+
+/**
+ * @brief Processes negative responses
+ * 
+ * @param svcid 
+ * @param nrsp 
+ */
+void udsapp_nrsp_process(uint8_t svcid, uint8_t nrsp)
+{
+
+}
+
+/**
+ * @brief Requests a higher level diagnostic session
+ * 
+ * @param func 
+ * @param sprsp 
+ */
+int udsapp_req_diagnostic_session(uds_tp_layer_t *uds_tp_ptr, uint8_t func, uint8_t sprsp)
+{
+    int result = 0;
+
+    if (uds_tp_ptr == NULL)
+    {
+        printf("udsapp_req_diagnostic_session uds_tp_ptr is NULL\n");
+        return -1;
+    }
+
+    // PRE_REQUEST_CHECK();
+    // struct Iso14229Request *req = &client->req;
+    // memcpy(uds_dl.in_qf.q_in, , );
+    uds_tp_ptr->out.buf[0] = DiagnosticSessionControl;
+    uds_tp_ptr->out.buf[1] = func;
+    uds_tp_ptr->out.sts = N_STS_REDAY;
+    uds_tp_ptr->out.pci.dl = 2;
+    // req->buf[0] = kSID_DIAGNOSTIC_SESSION_CONTROL;
+    // req->buf[1] = func;
+    // req->len = 2;
+
+    // return _SendRequest(client);
+    // while(1)
+    // {
+    //     uds_process();
+    // }
+
+    return result;
+}
+
+/**
+ * @brief Requests a reset of the ECU
+ * 
+ * @param func 
+ * @param sprsp 
+ */
+// void uds_req_ecu_reset(uint8_t func, uint8_t sprsp)
+// {
+
+// }
+
+/**
+ * @brief uds_req_security_access
+ * 
+ * @param func 
+ * @param sprsp 
+ * @param key 
+ * @param klen 
+ * @return enum Iso14229ClientError 
+ */
+//enum Iso14229ClientError uds_req_security_access(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen)
+void uds_req_security_access(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen)
+{
+//    enum Iso14229ClientError ret = kISO14229_CLIENT_OK;
+
+//    return ret;
+}
+
+/**
+ * @brief Enable/Disable certain messages
+ * 
+ * @param func 
+ * @param sprsp 
+ * @param type 
+ */
+void uds_req_communication_control(uint8_t func, uint8_t sprsp, uint8_t type)
+{
+
+}
+/**
+ * @brief Inform server that a tester is present
+ * 
+ * @param sprsp 
+ */
+void uds_req_tester_present(uint8_t sprsp)
+{
+
+}
+
+/**
+ * @brief Read and change link timing
+ * 
+ * @param func 
+ * @param sprsp 
+ * @param key 
+ * @param klen 
+ */
+void uds_req_access_timing_parameter(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen )
+{
+
+}
+/**
+ * @brief Transmit data in a secure manner
+ * 
+ * @param sd 
+ * @param sdlen 
+ */
+void uds_req_secured_data_transmission(uint8_t *sd, uint8_t sdlen)
+{
+
+}
+
+/**
+ * @brief Halt/resume setting of DTCs
+ * 
+ * @param func 
+ * @param sprsp 
+ * @param key 
+ * @param klen 
+ */
+void uds_req_control_dtc_setting(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen)
+{
+
+}
+/**
+ * @brief Automatically respond to certain events with a defined request
+ * 
+ * @param evntype 
+ * @param wintime 
+ * @param rec 
+ * @param reclen 
+ * @param rsp 
+ * @param rsplen 
+ */
+void uds_req_response_on_event(uint8_t evntype, uint8_t wintime, uint8_t *rec, uint8_t reclen, 
+    uint8_t *rsp, uint8_t rsplen)
+{
+
+}    
+
+/**
+ * @brief Check to see if transition of link baudrate to predefined rate is possible
+ * 
+ * @param sprsp 
+ * @param baud 
+ */
+void uds_req_link_control_predef(uint8_t sprsp, uint8_t baud)
+{
+
+}
+
+/**
+ * @brief Check to see if transition of link baudrate to specified rate is possible
+ * 
+ * @param sprsp 
+ * @param baud 
+ */
+void uds_req_link_control_user(uint8_t sprsp, uint32_t baud)
+{
+
+}
+
+/**
+ * @brief Transition to previously discussed rate
+ * 
+ * @param func 
+ * @param sprsp 
+ */
+void uds_req_link_control(uint8_t func, uint8_t sprsp)
+{
+
+}
+
+/**
+ * @brief Reads data by defined dataIdentifier
+ * 
+ * @param did 
+ * @param dlen 
+ */
+void uds_req_read_data_by_id(uint16_t *did, uint8_t dlen)
+{
+
+}
+
+/**
+ * @brief Read memory by address
+ * 
+ * @param addr 
+ * @param size 
+ */
+void uds_req_read_memory_by_address(uint32_t addr, uint16_t size)
+{
+
+}
+
+/**
+ * @brief Read scaling data by dataIdentifier
+ * 
+ * @param id 
+ */
+void uds_req_read_scaling_by_id(uint16_t id)
+{
+
+}
+
+/**
+ * @brief Read data by periodic identifier
+ * 
+ * @param txmode 
+ * @param did 
+ * @param dlen 
+ */
+void uds_req_read_data_by_periodic_id(uint8_t txmode, uint16_t *did, uint8_t dlen)
+{
+
+}
+
+/**
+ * @brief Define a dataIdentifier for reading
+ * 
+ * @param sprsp 
+ * @param ddid 
+ * @param sdid 
+ * @param pos 
+ * @param msize 
+ * @param len 
+ */
+void uds_req_dynamically_define_by_data_id(uint8_t sprsp, uint16_t ddid, uint16_t *sdid, 
+    uint8_t *pos, uint8_t *msize, uint8_t len)
+{
+    
+}
+
+/**
+ * @brief Define a dataIdentifier using a memory address for reading
+ * 
+ * @param sprsp 
+ * @param ddid 
+ * @param addr 
+ * @param size 
+ * @param len 
+ */
+void uds_req_dynamically_define_by_memory_address(uint8_t sprsp, uint16_t ddid, uint32_t *addr, uint16_t *size, uint8_t len)
+{
+
+}
+
+/**
+ * @brief Clear a dynamically defined data Identifier
+ * 
+ * @param sprsp 
+ * @param ddid 
+ */
+void uds_req_clear_dynamically_defined_data_id(uint8_t sprsp, uint16_t ddid)
+{
+
+}
+
+/**
+ * @brief Write data specified by dataIdentifier
+ * 
+ * @param did 
+ * @param drec 
+ * @param len 
+ */
+void uds_req_write_data_by_id(uint16_t did, uint8_t *drec, uint8_t len)
+{
+
+}
+
+/**
+ * @brief Write data to memory by address
+ * 
+ * @param addr 
+ * @param size 
+ * @param drec 
+ */
+void uds_req_write_memory_by_address(uint32_t addr, uint16_t size, uint8_t *drec)
+{
+
+}
+
+/**
+ * @brief Clear DTC information
+ * 
+ * @param dtc 
+ */
+void uds_req_clear_diagnostic_information(uint32_t dtc)
+{
+
+}
+
+
+/**
+ * @brief 
+ * 
+ * @param sprsp 
+ * @param mask 
+ */
+// void uds_req_read_dtc_data_info_mask(uint8_t sprsp, uint8_t mask)
+// {
+
+// }
+/**
+ * @brief Request report of all DTC Snapshots
+ * 
+ * @param sprsp 
+ */
+void uds_req_read_dtc_info_report_snapshot_id(uint8_t sprsp)
+{
+
+}
+
+/**
+ * @brief Request report of DTCSnapshots related to specified DTC
+ * 
+ * @param sprsp 
+ * @param mask 
+ * @param recnum 
+ */
+void uds_req_read_dtc_info_report_snapshot_by_dtc(uint8_t sprsp, uint32_t mask, uint8_t recnum)
+{
+
+}
+
+/**
+ * @brief Read data from specified DTCSnapshot
+ * 
+ * @param sprsp 
+ * @param recnum 
+ */
+void uds_req_read_dtc_info_report_snapshot_by_record(uint8_t sprsp, uint8_t recnum)
+{
+
+}
+
+/**
+ * @brief Read extended data about specified DTC
+ * 
+ * @param func 
+ * @param sprsp 
+ * @param mask 
+ * @param recnum 
+ */
+void uds_req_read_dtc_info_edr_dtc(uint8_t func, uint8_t sprsp, uint32_t mask, uint8_t recnum)
+{
+
+}
+
+/**
+ * @brief Request list of DTCs which match specified severity level
+ * 
+ * @param func 
+ * @param sprsp 
+ * @param mask 
+ */
+void uds_req_read_dtc_info_severity_info(uint8_t func, uint8_t sprsp, uint16_t mask)
+{
+
+}
+
+/**
+ * @brief Read severity info of specified DTC
+ * 
+ * @param sprsp 
+ * @param mask 
+ */
+void uds_req_read_dtc_info_severity_dtc(uint8_t sprsp, uint32_t mask)
+{
+
+}
+
+/**
+ * @brief Catchall function for remaining DTC info sub-functions
+ * 
+ * @param func 
+ * @param sprsp 
+ */
+void uds_req_read_dtc_info_misc(uint8_t func, uint8_t sprsp)
+{
+
+}
+
+/**
+ * @brief Emulate value for input/output signal
+ * 
+ * @param did 
+ * @param opt 
+ * @param optlen 
+ * @param mask 
+ * @param masklen 
+ */
+void uds_req_io_control(uint16_t did, uint8_t *opt, uint8_t optlen, uint8_t *mask, uint8_t masklen)
+{
+
+}
+
+/**
+ * @brief Start/stop stored routine
+ * 
+ * @param rtype 
+ * @param rid 
+ * @param ropt 
+ * @param optlen 
+ */
+void uds_req_routine_control(uint8_t rtype, uint16_t rid, uint8_t *ropt, uint8_t optlen)
+{
+
+}
+
+/**
+ * @brief Request a download to the server
+ * 
+ * @param dfmtid 
+ * @param maddr 
+ * @param maddrlen 
+ * @param msize 
+ * @param msizelen 
+ */
+void uds_req_download(uint8_t dfmtid, uint8_t *maddr, uint8_t maddrlen, uint8_t *msize, uint8_t msizelen)
+{
+
+}
+
+/**
+ * @brief Request an upload from the server
+ * 
+ * @param dfmtid 
+ * @param maddr 
+ * @param maddrlen 
+ * @param msize 
+ * @param msizelen 
+ */
+void uds_req_upload(uint8_t dfmtid, uint8_t *maddr, uint8_t maddrlen, uint8_t *msize, uint8_t msizelen)
+{
+
+}
+
+/**
+ * @brief Transfer data after request has been made
+ * 
+ * @param blckcnt 
+ * @param txparam 
+ * @param paramlen 
+ * @return int 
+ */
+int uds_req_transfer_data(uint8_t blckcnt, uint8_t *txparam, uint8_t paramlen)
+{
+    return 0;
+}
+
+/**
+ * @brief Exit data transfer mode
+ * 
+ * @param sd 
+ * @param sdlen 
+ */
+void uds_req_transfer_exit(uint8_t *sd, uint8_t sdlen)
+{
+
+}
+
+/**
+ * @brief Automatically create secured session
+ * 
+ * @param level 
+ */
+void uds_create_secured_session(uint8_t level)
+{
+
+}
+
+/**
+ * @brief Processes seed into key for secure session creation
+ * 
+ * @param seed 
+ * @param seedlen 
+ */
+void udsapp_process_seed(uint8_t *seed, uint16_t *seedlen)
+{
+
+}
 
 
 

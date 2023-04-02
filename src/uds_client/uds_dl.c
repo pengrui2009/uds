@@ -6,12 +6,14 @@
  * ==========  =========  ========= =======================================
  * 2022-04-24  V1.0       Wcy       Create
  *
- * @Copyright (C)  2022  Jixing. all right reserved
+ * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 
 
 #include "uds.h"
 #include "virtual_socketcan.h"
+
+#include <string.h>
 
 /**
  * @brief 
@@ -43,11 +45,20 @@ void uds_dl_init(uds_dl_layer_t *pdl)
  */
 void uds_dl_process_in(uds_dl_layer_t *pdl)
 {   
-    
-    if (uds_qdequeue(&pdl->in_qf, &pdl->in.fr, (uint16_t)(sizeof(struct can_frame))) == UDS_Q_OK) {
-        pdl->in.sts = L_STS_READY;
+    int result = 0;
+
+    result = can_rx(&pdl->in.fr);
+    if (result)
+    {
+        // printf("can_rx failed, result:%d\n", result);
+        return;
     }
-    
+
+    // if (uds_qdequeue(&pdl->in_qf, &pdl->in.fr, (uint16_t)(sizeof(struct can_frame))) == UDS_Q_OK) {
+    //     pdl->in.sts = L_STS_READY;
+    // }
+    pdl->in.sts = L_STS_READY;
+
 }
 
 
@@ -58,8 +69,18 @@ void uds_dl_process_in(uds_dl_layer_t *pdl)
  */
 void uds_dl_process_out(uds_dl_layer_t *pdl)
 {
-    if (pdl->out.sts == L_STS_READY) {
-        can_tx(&pdl->out.fr);
+    int result = 0;
+
+    if (pdl->out.sts == L_STS_READY) 
+    {
+        pdl->out.fr.can_id = UDS_TP_PHYSICAL_ADDR;
+        result = can_tx(&pdl->out.fr);
+        if (result)
+        {
+            printf("can_tx failed!\n");
+            return;
+        }
+                
         pdl->out.sts = L_STS_IDLE;
     }
 }

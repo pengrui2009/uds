@@ -135,7 +135,7 @@ uint8_t can_tx(const struct can_frame *frame_ptr)
     long id = frame_ptr->can_id;
     unsigned int dlc = frame_ptr->can_dlc;
 
-    stat = canWriteWait(hnd, id, frame_ptr->can_dlc, dlc, canMSG_EXT, WRITE_WAIT_INFINITE);
+    stat = canWriteWait(hnd, id, (void *)frame_ptr->data, dlc, canMSG_EXT, WRITE_WAIT_INFINITE);
     if (stat != canOK) 
     {
         printf("send failed\n");
