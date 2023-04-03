@@ -1,6 +1,6 @@
 /**
  * @file uds_q.h
- * @author rui.peng (rui.peng@tusen.ai)
+ * @author rui.peng (pengrui2009@gmail.com)
  * @brief uds queue contain can frame
  * @version 0.1
  * @date 2022-06-10

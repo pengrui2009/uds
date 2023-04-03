@@ -1,7 +1,8 @@
 /**
  * @file uds_dl.h
- * @author rui.peng (rui.peng@tusen.ai)
- * @brief 
+ * @author rui.peng (pengrui2009@gmail.com)
+ * @brief uds data link layer implement, 
+    only support the classic can and standard id
  * @version 0.1
  * @date 2022-06-10
  * 
@@ -13,11 +14,13 @@
 #define UDS_DL_H_
 
 #include "uds_q.h"
-// #include "can_drv.h"
 
 #include <stdint.h>
 #include <linux/can.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** data link layer 
  *  only support the classic can and standard id
@@ -31,23 +34,24 @@ typedef enum {
     L_STS_READY,
 } uds_dl_sts_t;
 
-
 typedef struct {
     uds_dl_sts_t        sts;
     struct can_frame    fr;
 } uds_dl_iostream_t;
-
 
 // typedef struct {
 //     uds_dl_sts_t        sts;
 //     can_std_frame_t     buf;
 // } uds_dl_outstream_t;
 
-
 typedef struct {
+    // in can frame info
     uds_dl_iostream_t  in;
+    // out can frame info
     uds_dl_iostream_t  out;
+    // in can frame queue
     uds_q_t            in_qf;
+    // in can frame queue buffers
     struct can_frame   in_frs[UDS_DL_IN_SZ];
 } uds_dl_layer_t;
 
@@ -55,5 +59,9 @@ typedef struct {
 void uds_dl_init(uds_dl_layer_t *pdl);
 void uds_dl_process_in(uds_dl_layer_t *pdl);
 void uds_dl_process_out(uds_dl_layer_t *pdl);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UDS_DL_H_ */

@@ -1,7 +1,11 @@
 /**
  * @file uds_tp.h
- * @author rui.peng (rui.peng@tusen.ai)
- * @brief 
+ * @author rui.peng (pengrui2009@gmail.com)
+ * @brief implementation of network layer and transport layer with
+ *        reference to the standard of iso15765, 
+ *        1. timeout error will include the N_TIMEOUT_Bs and N_TIMEOUT_Cr except  N_TIMEOUT_A
+ *        2. half duplex
+ *        3. not supported remote diagnotic
  * @version 0.1
  * @date 2022-06-10
  * 
@@ -17,28 +21,24 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/** implementation of network layer and transport layer with
- *  reference to the standard of iso15765, 
- * 1. timeout error will include the N_TIMEOUT_Bs and  
- * N_TIMEOUT_Cr except  N_TIMEOUT_A
- * 2. half duplex
- * 3. not supported remote diagnotic
-*/
-#define UDS_TP_BUF_SZ                   512u
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/**
- * @brief timer of uds
- * 
- */
-typedef void (*uds_func_t)(void *);
 
-typedef struct {
-    bool_t st;
-    uint32_t val;
-    uint32_t cnt;
-    uds_func_t act;
-    void *parg;
-} uds_timer_t;
+#define UDS_N_WAITCF_IND    0x00u
+#define UDS_N_WAITFC_IND    0x01u
+#define UDS_A_S3_IND        0x02u
+#define UDS_A_SADELAY_IND   0x03u
+
+#define UDS_TP_BUF_SZ           512u
+
+#define UDS_TP_Cs               (UDS_TP_Cr - UDS_TP_As)
+#define UDS_TP_Br               (UDS_TP_Bs - UDS_TP_Ar)
+
+
+#define UDS_TP_WAIT_FC_TIMEOUT          (UDS_TP_As + UDS_TP_Bs)  /* when we are a sender */
+#define UDS_TP_WAIT_CF_TIMEOUT          (UDS_TP_Cr)              /* when we are a receiver, and we got a cf already. */
 
 typedef enum {
     N_PCI_SF = 0u,   /* single frame */
@@ -161,5 +161,9 @@ void uds_tp_process_out(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl);
  * @param ptp 
  */
 void uds_tp_process_to(uds_tp_layer_t *ptp);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UDS_TP_H_ */

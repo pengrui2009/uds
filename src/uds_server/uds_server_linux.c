@@ -129,14 +129,16 @@ int main(void)
                 printf("uds_qenqueue result:%d\n", result);
                 break;
             }
+
+            uds_process();
         }
 
-        if (fr.can_id != UDS_TP_PHYSICAL_ADDR)
-        {
-            continue;
-        }
-            
-        uds_process();
+        // if (fr.can_id != UDS_TP_PHYSICAL_ADDR)
+        // {
+        //     continue;
+        // }
+
+        // uds_process();
 
         if ((!uds_dl.in_qf.qentries) && stop) {
             break;

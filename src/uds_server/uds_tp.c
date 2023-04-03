@@ -9,19 +9,23 @@
  * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 
+#include "uds_tp.h"
+#include "uds_cfg.def"
 
-#include "uds.h"
+#include <stdio.h>
+#include <string.h>
 
+UDS_EXT uds_timer_t uds_timer[UDS_TIEMR_NUM];
 
 /**
- * @brief process 
+ * @brief process wait consecutive frame timeout
  * 
  * @param ptp 
  */
 static void uds_tp_process_wc_to(void *ptp);
 
 /**
- * @brief process 
+ * @brief process wait flow control frame timeout
  * 
  * @param ptp 
  */
@@ -98,7 +102,13 @@ static void uds_tp_process_out_fc(uds_tp_layer_t *ptp, struct can_frame *pfr);
  * @param ptp 
  */
 void uds_tp_init(uds_tp_layer_t *ptp) 
-{   
+{
+    if (ptp == NULL)
+    {
+        printf("uds_tp_init ptp=NULL\n");
+        return;
+    }
+
     // clear all mem
     memset(ptp, 0, sizeof(uds_tp_layer_t));
 
@@ -125,7 +135,6 @@ void uds_tp_init(uds_tp_layer_t *ptp)
     ptp->in.ptmr_wc->cnt        = UDS_TP_WAIT_CF_TIMEOUT;
 }
 
-
 /**
  * @brief 
  * 
@@ -133,7 +142,13 @@ void uds_tp_init(uds_tp_layer_t *ptp)
  * @param pdl 
  */
 void uds_tp_process_in(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
-{   
+{
+    if ((ptp == NULL) || (pdl == NULL))
+    {
+        printf("uds_tp_process_in ptp/pdl = NULL!\n");
+        return;
+    }
+
     if (pdl->in.sts == L_STS_READY) {
         ptp->in.pci.pt = (pdl->in.fr.data[0] & 0xF0u) >> 4;
 
@@ -165,7 +180,6 @@ void uds_tp_process_in(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
     }
 }
 
-
 /**
  * @brief 
  * 
@@ -174,7 +188,12 @@ void uds_tp_process_in(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
  * @return uds_tp_rslt_t 
  */
 void uds_tp_process_out(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
-{   
+{
+    if ((ptp == NULL) || (pdl == NULL))
+    {
+        printf("uds_tp_process_out ptp/pdl = NULL!\n");
+        return;
+    }
     /* fill the data link layer to fill the invalid byte with 0xAA */
     memset((uint8_t *)pdl->out.fr.data, UDS_FILL_VALUE, UDS_DL_CAN_DL);
 
@@ -218,7 +237,6 @@ void uds_tp_process_out(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
     }
 }
 
-
 /**
  * @brief 
  * 
@@ -230,7 +248,6 @@ static void uds_tp_process_wc_to(void *ptp)
     ((uds_tp_layer_t *)ptp)->in.sts = N_STS_ERROR;
 }
 
-
 /**
  * @brief 
  * 
@@ -240,8 +257,6 @@ static void uds_tp_process_wf_to(void *ptp)
 {
     ((uds_tp_layer_t *)ptp)->out.sts = N_STS_IDLE;
 }
-
-
 
 /**
  * @brief 

@@ -9,40 +9,44 @@
  * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 
-#include "uds.h"
+#include "uds_ap.h"
+#include "uds_cfg.def"
 
+#include <stdio.h>
+#include <string.h>
+
+UDS_EXT uds_timer_t uds_timer[UDS_TIEMR_NUM];
 
 static void uds_ap_process_s3_to(void *pap);
 static void uds_ap_process_sadelay_to(void *pap);
 
 
-void uds_service_0x10(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x11(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x27(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x28(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x3E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x83(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x84(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x85(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x86(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x87(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x22(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x23(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x24(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x2A(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x2C(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x2E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x3D(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x14(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x19(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x2F(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x31(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x34(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x35(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x36(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-void uds_service_0x37(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-// void uds_service_0x38(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
-
+static void uds_service_0x10(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x11(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x27(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x28(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x3E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x83(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x84(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x85(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x86(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x87(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x22(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x23(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x24(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x2A(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x2C(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x2E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x3D(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x14(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x19(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x2F(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x31(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x34(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x35(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x36(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x37(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+static void uds_service_0x38(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
 
 
 #include "did.h"
@@ -86,36 +90,40 @@ const uds_ap_service_t uds_service_list[] = {
         SECURITY_LEVEL_0, 
         uds_service_0x3E
     },
-    // {
-    //     AccessTimingParameter,             
-    //     (programmingSession|extendedDiagnosticSession), 
-    //     SECURITY_LEVEL_0, 
-    //     uds_service_0x83
-    // },
-    // {
-    //     SecuredDataTransmission,           
-    //     (defaultSession|programmingSession|extendedDiagnosticSession), 
-    //     SECURITY_LEVEL_3, 
-    //     uds_service_0x84
-    // },
+
+    {
+        AccessTimingParameter,             
+        (programmingSession|extendedDiagnosticSession), 
+        SECURITY_LEVEL_0, 
+        uds_service_0x83
+    },
+
+    {
+        SecuredDataTransmission,           
+        (defaultSession|programmingSession|extendedDiagnosticSession), 
+        SECURITY_LEVEL_3, 
+        uds_service_0x84
+    },
     {
         ControlDTCSetting,                 
         (extendedDiagnosticSession), 
         SECURITY_LEVEL_0, 
         uds_service_0x85
     },
-    // {
-    //     ResponseOnEvent,                   
-    //     (extendedDiagnosticSession), 
-    //     SECURITY_LEVEL_0, 
-    //     uds_service_0x86
-    // },   
-    // {
-    //     LinkControl,                       
-    //     (extendedDiagnosticSession), 
-    //     SECURITY_LEVEL_0, 
-    //     uds_service_0x87
-    // },
+
+    {
+        ResponseOnEvent,                   
+        (extendedDiagnosticSession), 
+        SECURITY_LEVEL_0, 
+        uds_service_0x86
+    },   
+
+    {
+        LinkControl,                       
+        (extendedDiagnosticSession), 
+        SECURITY_LEVEL_0, 
+        uds_service_0x87
+    },
 
     /* Data Transmission */
     {
@@ -124,42 +132,48 @@ const uds_ap_service_t uds_service_list[] = {
         SECURITY_LEVEL_1, 
         uds_service_0x22
     },
-    // {
-    //     ReadMemoryByAddress,               
-    //     (extendedDiagnosticSession), 
-    //     SECURITY_LEVEL_0, 
-    //     uds_service_0x23
-    // },
-    // {
-    //     ReadScalingDataByIdentifier,       
-    //     (extendedDiagnosticSession), 
-    //     SECURITY_LEVEL_0, 
-    //     uds_service_0x24
-    // },
-    // {
-    //     ReadDataByPeriodicIdentifier,      
-    //     (extendedDiagnosticSession), 
-    //     SECURITY_LEVEL_0, 
-    //     uds_service_0x2A
-    // },
-    // {
-    //     DynamicallyDefineDataIdentifier,   
-    //     (extendedDiagnosticSession), 
-    //     SECURITY_LEVEL_0, 
-    //     uds_service_0x2C
-    // },
+
+    {
+        ReadMemoryByAddress,               
+        (extendedDiagnosticSession), 
+        SECURITY_LEVEL_0, 
+        uds_service_0x23
+    },
+
+    {
+        ReadScalingDataByIdentifier,       
+        (extendedDiagnosticSession), 
+        SECURITY_LEVEL_0, 
+        uds_service_0x24
+    },
+
+    {
+        ReadDataByPeriodicIdentifier,      
+        (extendedDiagnosticSession), 
+        SECURITY_LEVEL_0, 
+        uds_service_0x2A
+    },
+
+    {
+        DynamicallyDefineDataIdentifier,   
+        (extendedDiagnosticSession), 
+        SECURITY_LEVEL_0, 
+        uds_service_0x2C
+    },
+
     {
         WriteDataByIdentifier,             
         (extendedDiagnosticSession), 
         SECURITY_LEVEL_1, 
         uds_service_0x2E
     },
-    // {
-    //     WriteMemoryByAddress,              
-    //     (extendedDiagnosticSession), 
-    //     SECURITY_LEVEL_2, 
-    //     uds_service_0x3D
-    // },
+
+    {
+        WriteMemoryByAddress,              
+        (extendedDiagnosticSession), 
+        SECURITY_LEVEL_2, 
+        uds_service_0x3D
+    },
 
     /* Stored Data Transmission */
     {
@@ -198,12 +212,12 @@ const uds_ap_service_t uds_service_list[] = {
         SECURITY_LEVEL_0, 
         uds_service_0x34
     },
-    // {
-    //     RequestUpload,                     
-    //     (programmingSession), 
-    //     SECURITY_LEVEL_0, 
-    //     uds_service_0x35
-    // },
+    {
+        RequestUpload,                     
+        (programmingSession), 
+        SECURITY_LEVEL_0, 
+        uds_service_0x35
+    },
     {
         TransferData,                      
         (programmingSession), 
@@ -216,16 +230,15 @@ const uds_ap_service_t uds_service_list[] = {
         SECURITY_LEVEL_0, 
         uds_service_0x37
     },
-    // {
-    //     RequestFileTransfer,               
-    //     (programmingSession), 
-    //     SECURITY_LEVEL_0, 
-    //     uds_service_0x38
-    // },
+    {
+        RequestFileTransfer,               
+        (programmingSession), 
+        SECURITY_LEVEL_0, 
+        uds_service_0x38
+    },
 };
 
 #define UDS_SERVICE_NUM (sizeof(uds_service_list) / sizeof(uds_ap_service_t))
-
 
 /**
  * @brief uds negative response
@@ -273,7 +286,6 @@ const uds_ap_service_t *uds_service_find(uds_ap_sid_type_t sid)
     return (uds_service);
 }
 
-
 /**
  * @brief 
  * 
@@ -281,6 +293,12 @@ const uds_ap_service_t *uds_service_find(uds_ap_sid_type_t sid)
  */
 void uds_ap_init(uds_ap_layer_t *pap)
 {
+    if (pap == NULL)
+    {
+        printf("uds_ap_init pap = NULL!\n");
+        return;
+    }
+
     memset((uint8_t *)pap, 0, sizeof(uds_ap_layer_t));
 
     pap->cur_ses = defaultSession;
@@ -305,7 +323,6 @@ void uds_ap_init(uds_ap_layer_t *pap)
 
 }
 
-
 /**
  * @brief 
  * 
@@ -313,7 +330,13 @@ void uds_ap_init(uds_ap_layer_t *pap)
  * @param ptp 
  */
 void uds_ap_process(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-{   
+{
+    if ((pap == NULL) || (ptp == NULL))
+    {
+        printf("uds_ap_process pap/ptp = NULL!\n");
+        return;
+    }
+
     const uds_ap_service_t *uds_service_ptr;
     if (ptp->out.sts == N_STS_IDLE) {
         if (ptp->in.sts == N_STS_REDAY) {
@@ -349,7 +372,6 @@ void uds_ap_process(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
     }
 }
 
-
 /**
  * @brief 
  * 
@@ -361,7 +383,6 @@ static void uds_ap_process_s3_to(void *pap)
     ((uds_ap_layer_t *)pap)->cur_sec = SECURITY_LEVEL_0;
     ((uds_ap_layer_t *)pap)->sec_ctrl.sds_recv.all = 0;
 }
-
 
 /**
  * @brief 
@@ -380,7 +401,7 @@ static void uds_ap_process_sadelay_to(void *pap)
  * @param pap 
  * @param ptp 
  */
-void uds_service_0x10(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x10(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {   
     bool_t pos_rsp_flag = false;
     uds_ap_nrc_type_t nrc;
@@ -448,14 +469,13 @@ void uds_service_0x10(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
     }
 }
 
-
 /**
  * @brief 
  * 
  * @param pap 
  * @param ptp 
  */
-void uds_service_0x11(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x11(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
     bool_t pos_rsp_flag = false;
     uds_ap_nrc_type_t nrc;
@@ -516,7 +536,7 @@ void uds_service_0x11(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
  * @param pap 
  * @param ptp 
  */
-void uds_service_0x27(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x27(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
     bool_t pos_rsp_flag = false;
     uds_ap_nrc_type_t nrc;
@@ -715,7 +735,6 @@ void uds_service_0x27(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
     }
 }
 
-
 /**
  * @brief 
  *  parameter   0x01 normalCommunicationMessages 
@@ -724,7 +743,7 @@ void uds_service_0x27(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
  * @param pap 
  * @param ptp 
  */
-void uds_service_0x28(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x28(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
     bool_t pos_rsp_flag = false;
     uds_ap_nrc_type_t nrc;
@@ -870,14 +889,13 @@ void uds_service_0x28(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
     }
 }
 
-
 /**
  * @brief 
  * 
  * @param pap 
  * @param ptp 
  */
-void uds_service_0x3E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x3E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {   
     bool_t pos_rsp_flag = false;
     uds_ap_nrc_type_t nrc;
@@ -918,18 +936,15 @@ void uds_service_0x3E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
     
 }
 
+static void uds_service_0x83(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
-// void uds_service_0x83(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
+}
 
-// }
+static void uds_service_0x84(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
-
-// void uds_service_0x84(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
-
-// }
-
+}
 
 /**
  * @brief 
@@ -937,7 +952,7 @@ void uds_service_0x3E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
  * @param pap 
  * @param ptp 
  */
-void uds_service_0x85(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x85(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
     bool_t pos_rsp_flag = false;
     uds_ap_nrc_type_t nrc;
@@ -989,18 +1004,15 @@ void uds_service_0x85(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
     }
 }
 
+static void uds_service_0x86(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
-// void uds_service_0x86(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
-// 
-// }
+}
 
+static void uds_service_0x87(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
-// void uds_service_0x87(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
-// 
-// }
-
+}
 
 /**
  * @brief 
@@ -1008,7 +1020,7 @@ void uds_service_0x85(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
  * @param pap 
  * @param ptp 
  */
-void uds_service_0x22(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x22(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
     bool_t              pos_rsp_flag = false;
     bool_t              pos_too_long = false;
@@ -1095,30 +1107,25 @@ void uds_service_0x22(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
     }
 }
 
+static void uds_service_0x23(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
-// void uds_service_0x23(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
+}
 
-// }
+static void uds_service_0x24(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
+}
 
-// void uds_service_0x24(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
+static void uds_service_0x2A(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
-// }
+}
 
+static void uds_service_0x2C(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
-// void uds_service_0x2A(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
-
-// }
-
-
-// void uds_service_0x2C(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
-
-// }
-
+}
 
 /**
  * @brief 
@@ -1126,7 +1133,7 @@ void uds_service_0x22(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
  * @param pap 
  * @param ptp 
  */
-void uds_service_0x2E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x2E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {   
     const uds_did_type_t *uds_did;
 
@@ -1175,67 +1182,52 @@ void uds_service_0x2E(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
     }
 }
 
-
-// void uds_service_0x3D(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
-
-// }
-
-
-void uds_service_0x14(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x3D(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
 
 }
 
-
-void uds_service_0x19(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x14(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
 
 }
 
-
-void uds_service_0x2F(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x19(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
 
 }
 
-
-void uds_service_0x31(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x2F(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
 
 }
 
-
-void uds_service_0x34(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x31(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
 
 }
 
-
-// void uds_service_0x35(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
-
-// }
-
-
-void uds_service_0x36(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x34(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
 
 }
 
-
-void uds_service_0x37(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+static void uds_service_0x35(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
 
 }
 
+static void uds_service_0x36(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
-// void uds_service_0x38(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
-// {
+}
 
-// }
+static void uds_service_0x37(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
+}
 
+static void uds_service_0x38(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
+{
 
-
-
+}

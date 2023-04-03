@@ -1,6 +1,6 @@
 /**
  * @file cmn.h
- * @author rui.peng (rui.peng@tusen.ai)
+ * @author rui.peng (pengrui2009@gmail.com)
  * @brief 
  * @version 0.1
  * @date 2022-06-10

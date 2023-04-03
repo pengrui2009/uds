@@ -1,6 +1,6 @@
 /**
  * @file uds_ap.h
- * @author rui.peng (rui.peng@tusen.ai)
+ * @author rui.peng (pengrui2009@gmail.com)
  * @brief 
  * @version 0.1
  * @date 2022-06-10
@@ -154,6 +154,31 @@ typedef enum {
     A_STS_ERROR,
 } uds_ap_sts_t;
 
+typedef enum {
+    UDS_SEQ_ERR_MIN = INT16_MIN, // 固定范围
+
+    // 用户可以定义流程项管故障码在这个范围内
+
+    UDS_SEQ_ERR_UNUSED = -127,
+    UDS_SEQ_ERR_TIMEOUT,       // 流程超时
+    UDS_SEQ_ERR_NULL_CALLBACK, // 回调函数是NULL
+
+    UDS_CLIENT_ERR_RESP_SCHEMA_INVALID = -12, // 数据内容或者大小不按照应用定义(如ODX)
+
+    UDS_CLIENT_ERR_RESP_DID_MISMATCH = -11,            // 响应DID对不上期待的DID
+    UDS_CLIENT_ERR_RESP_CANNOT_UNPACK = -10,           // 响应不能解析
+    UDS_CLIENT_ERR_RESP_TOO_SHORT = -9,                // 响应太小
+    UDS_CLIENT_ERR_RESP_NEGATIVE = -8,                 // 否定响应
+    UDS_CLIENT_ERR_RESP_SID_MISMATCH = -7,             // 请求和响应SID对不上
+    UDS_CLIENT_ERR_RESP_UNEXPECTED = -6,               // 突然响应
+    UDS_CLIENT_ERR_REQ_TIMED_OUT = -5,                 // 请求超时
+    UDS_CLIENT_ERR_REQ_NOT_SENT_TPORT_ERR = -4,        // 传输层故障、没发
+    UDS_CLIENT_ERR_REQ_NOT_SENT_BUF_TOO_SMALL = -3,    // 传输层缓冲器不够大
+    UDS_CLIENT_ERR_REQ_NOT_SENT_INVALID_ARGS = -2,     // 参数不对、没发
+    UDS_CLIENT_ERR_REQ_NOT_SENT_SEND_IN_PROGRESS = -1, // 在忙、没发
+    UDS_CLIENT_OK = 0,                                 // 流程完成
+    UDS_CLIENT_SEQUENCE_RUNNING = 1,                   // 流程正在跑、还没完成
+} uds_client_error_t;
 
 typedef struct {
     uint8_t seed[3];

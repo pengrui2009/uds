@@ -9,7 +9,7 @@
  * @Copyright (C)  2022   all right reserved
 ***********************************************************************/
 
-
+// use to define uds_timer
 #define UDS_GLOABL
 
 #include "uds.h"

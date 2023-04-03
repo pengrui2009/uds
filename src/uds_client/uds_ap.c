@@ -307,6 +307,43 @@ void uds_ap_init(uds_ap_layer_t *pap)
 }
 
 
+// /**
+//  * @brief Check that the response is a valid UDS response
+//  *
+//  * @param ctx
+//  * @return enum uds_client_error_t
+//  */
+// enum uds_client_error_t uds_ap_valid_response(uds_tp_layer_t *ptp) {
+//     if (ptp->in.pci.dl < 1) 
+//     {
+//         return kISO14229_CLIENT_ERR_RESP_TOO_SHORT;
+//     }
+
+//     if (0x7F == ptp->in.buf[0]) // 否定响应
+//     {
+//         if (ptp->in.pci.dl < 2) 
+//         {
+//             return UDS_CLIENT_ERR_RESP_TOO_SHORT;
+//         } else if (client->req.buf[0] != ptp->in.buf[1]) {
+//             return UDS_CLIENT_ERR_RESP_SID_MISMATCH;
+//         } else if (kRequestCorrectlyReceived_ResponsePending == ptp->in.buf[2]) {
+//             return UDS_CLIENT_OK;
+//         } else if (client->_options_copy & NEG_RESP_IS_ERR) {
+//             return UDS_CLIENT_ERR_RESP_NEGATIVE;
+//         } else if (ptp->in.buf[0] == 0x7F) {
+//             return UDS_CLIENT_ERR_RESP_NEGATIVE;
+//         } else {
+//             ;
+//         }
+//     } else { // 肯定响应
+//         if (ISO14229_RESPONSE_SID_OF(client->req.buf[0]) != ptp->in.buf[0]) {
+//             return UDS_CLIENT_ERR_RESP_SID_MISMATCH;
+//         }
+//     }
+
+//     return UDS_CLIENT_OK;
+// }
+
 /**
  * @brief 
  * 
@@ -345,6 +382,110 @@ int uds_ap_process(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
                     case DiagnosticSessionControl: 
                     {
                         uds_service_0x10(pap, ptp);
+                        break;
+                    }
+                    case ECUReset:
+                    {
+                        break;
+                    }
+                    case SecurityAccess:
+                    {
+                        break;
+                    }
+                    case CommunicationControl:
+                    {
+                        break;
+                    }
+                    case TesterPresent:
+                    {
+                        break;
+                    }
+                    case AccessTimingParameter:
+                    {
+                        break;
+                    }
+                    case SecuredDataTransmission:
+                    {
+                        break;
+                    }
+                    case ControlDTCSetting:
+                    {
+                        break;
+                    }
+                    case ResponseOnEvent:
+                    {
+                        break;
+                    }
+                    case LinkControl:
+                    {
+                        break;
+                    }
+                    case ReadDataByIdentifier:
+                    {
+                        break;
+                    }
+                    case ReadMemoryByAddress:
+                    {
+                        break;
+                    }
+                    case ReadScalingDataByIdentifier:
+                    {
+                        break;
+                    }
+                    case ReadDataByPeriodicIdentifier:
+                    {
+                        break;
+                    }
+                    case DynamicallyDefineDataIdentifier:
+                    {
+                        break;
+                    }
+                    case WriteDataByIdentifier:
+                    {
+                        break;
+                    }
+                    case WriteMemoryByAddress:
+                    {
+                        break;
+                    }
+                    case ClearDiagnosticInformation:
+                    {
+                        break;
+                    }
+                    case ReadDTCInformation:
+                    {
+                        break;
+                    }
+                    case InputOutputControlByIdentifier:
+                    {
+                        break;
+                    }
+                    case RoutineControl:
+                    {
+                        break;
+                    }
+                    case RequestDownload:
+                    {
+                        break;
+                    }
+                    case RequestUpload:
+                    {
+                        break;
+                    }
+                    case TransferData:
+                    {
+                        break;
+                    }
+                    case RequestTransferExit:
+                    {
+                        break;
+                    }
+                    case RequestFileTransfer:
+                    {
+                        break;
+                    }
+                    default:
+                    {
                         break;
                     }
                 }

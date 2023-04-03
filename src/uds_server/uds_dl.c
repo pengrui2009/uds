@@ -6,7 +6,7 @@
  * ==========  =========  ========= =======================================
  * 2022-04-24  V1.0       Wcy       Create
  *
- * @Copyright (C)  2022   all right reserved
+ * @Copyright (C) 2022 all right reserved
 ***********************************************************************/
 
 #include "uds_dl.h"
@@ -22,7 +22,13 @@
  * @param pdl 
  */
 void uds_dl_init(uds_dl_layer_t *pdl)
-{   
+{
+    if (pdl == NULL)
+    {
+        printf("uds_dl_init pdl=NULL\n");
+        return;
+    }
+
     memset((uint8_t *)pdl, 0, sizeof(pdl));
 
     pdl->in_qf.qstart    = (struct can_frame *)&pdl->in_frs[0];
@@ -48,6 +54,12 @@ void uds_dl_process_in(uds_dl_layer_t *pdl)
 {   
     uds_q_rslt result = UDS_Q_OK;
     
+    if (pdl == NULL)
+    {
+        printf("uds_dl_process_in pdl=NULL!\n");
+        return;
+    }
+
     result = uds_qdequeue(&pdl->in_qf, &pdl->in.fr, (uint16_t)(sizeof(struct can_frame)));
     if (result == UDS_Q_OK) 
     {
@@ -65,8 +77,15 @@ void uds_dl_process_in(uds_dl_layer_t *pdl)
 void uds_dl_process_out(uds_dl_layer_t *pdl)
 {
     int ret = 0;
-    if (pdl->out.sts == L_STS_READY) {
-        //ret = can_tx(&pdl->out.fr);
+    
+    if (pdl == NULL)
+    {
+        printf("uds_dl_process_out pdl=NULL!\n");
+        return;
+    }
+
+    if (pdl->out.sts == L_STS_READY) 
+    {
         ret = can_tx(&pdl->out.fr);
         if (ret)
         {
