@@ -10,9 +10,11 @@
 ***********************************************************************/
 
 
-#include "uds.h"
+#include "uds_dl.h"
+#include "uds_cfg.def"
 #include "virtual_socketcan.h"
 
+#include <stdio.h>
 #include <string.h>
 
 /**

@@ -39,14 +39,24 @@ void* thread_entry(void *arg)
 {
     while(1)
     {
-        timerCount++;
-        uds_timer_tick();
-        // printf("timer: %ud\n", timerCount);
         usleep(1000);
+        for (int i=0; i<UDS_TIEMR_NUM; i++)
+        {
+            if (uds_timer[i].st == true)
+            {
+                uds_timer[i].cnt--;
+                if (uds_timer[i].cnt == 0)
+                {
+                    uds_timer[i].st = false;
+                    uds_timer[i].act(uds_timer[i].parg);
+                }
+            }
+        }        
     }
 
     return (void *)NULL;
 }
+
 
 
 int main()
@@ -112,10 +122,34 @@ int main()
 
     // }
     // pthread_join(tid, NULL);
+
+
     ret = uds_req_diagnostic_session(EXTENDDIAGNOSITIC_SESSION, 0);
     if (ret)
     {
         printf("uds_req_diagnostic_session failed, ret:%d\n", ret);
+        return -1;
+    }
+
+    ret = uds_req_ecu_reset(0, 0);
+    if (ret)
+    {
+        printf("uds_req_ecu_reset failed, ret:%d\n", ret);
+        return -1;
+    }
+
+    uint8_t blckcnt = 1;
+    uint8_t txparam[512] = {0x0};
+    uint32_t paramlen = 512;
+
+    for (int i=0; i<512; i++)
+    {
+        txparam[i] = (i % 256);
+    }
+    ret = uds_req_transfer_data(blckcnt, txparam, paramlen);
+    if (ret)
+    {
+        printf("uds_req_ecu_reset failed, ret:%d\n", ret);
         return -1;
     }
 

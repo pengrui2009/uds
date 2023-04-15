@@ -10,9 +10,13 @@
 ***********************************************************************/
 
 
-#include "uds.h"
+#include "uds_tp.h"
+#include "uds_cfg.def"
 
+#include <stdio.h>
+#include <string.h>
 
+UDS_EXT uds_timer_t uds_timer[UDS_TIEMR_NUM];
 
 static void uds_tp_process_wc_to(void *ptp);
 static void uds_tp_process_wf_to(void *ptp);
@@ -78,7 +82,7 @@ void uds_tp_process_in(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
         } else {
             ptp->in.pci.tt = N_TATYPE_FUNCTIONAL;
         }
-        printf("ptp->in.pci.pt:%d ptp->in.pci.tt:%d\n", ptp->in.pci.pt, ptp->in.pci.tt);
+
         switch (ptp->in.pci.pt) {
             case N_PCI_CF:
                 uds_tp_process_in_cf(ptp, &pdl->in.fr);
@@ -177,8 +181,6 @@ static void uds_tp_process_wf_to(void *ptp)
 {
     ((uds_tp_layer_t *)ptp)->out.sts = N_STS_IDLE;
 }
-
-
 
 /**
  * @brief 

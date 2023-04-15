@@ -63,7 +63,4 @@ typedef struct {
 
 
 
-
-
-
 #endif /* UDS_CMN_H_ */

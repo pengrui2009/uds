@@ -18,6 +18,9 @@
 #include <stdint.h>
 #include <linux/can.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** data link layer 
  *  only support the classic can and standard id
@@ -55,5 +58,9 @@ typedef struct {
 void uds_dl_init(uds_dl_layer_t *pdl);
 void uds_dl_process_in(uds_dl_layer_t *pdl);
 void uds_dl_process_out(uds_dl_layer_t *pdl);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UDS_DL_H_ */

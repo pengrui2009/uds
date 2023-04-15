@@ -157,9 +157,10 @@ void uds_tp_process_in(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
         } else {
             ptp->in.pci.tt = N_TATYPE_FUNCTIONAL;
         }
-
+        printf("pdl->in.sts:%d ptp->in.pci.pt:%d\n", pdl->in.sts, ptp->in.pci.pt);
         switch (ptp->in.pci.pt) {
             case N_PCI_CF:
+                printf("uds_tp_process_in_cf pdl->in.sts:%d ptp->in.pci.pt:%d\n", pdl->in.sts, ptp->in.pci.pt);
                 uds_tp_process_in_cf(ptp, &pdl->in.fr);
                 break;
             case N_PCI_FC:
@@ -267,6 +268,7 @@ static void uds_tp_process_wf_to(void *ptp)
 static void uds_tp_process_in_sf(uds_tp_layer_t *ptp, struct can_frame* pfr)
 {
     // if (ptp->out.sts == N_STS_IDLE) {
+    printf("uds_tp_process_in_sf ptp->in.sts:%d\n", ptp->in.sts);
     if (ptp->in.sts != N_STS_REDAY) {
         ptp->in.pci.dl = pfr->data[0] & 0x0Fu;
         if (ptp->in.pci.dl > 7) {

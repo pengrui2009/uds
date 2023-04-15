@@ -27,7 +27,7 @@ add_executable(uds_client
 target_link_libraries(uds_client
     udsc
     virtualcan
-    kvasercan
+    # kvasercan
     pthread
     canlib
 )

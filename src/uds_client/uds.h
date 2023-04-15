@@ -12,36 +12,26 @@
 #define __UDS_H__
 
 #include "uds_ap.h"
+#include "cmn.h"
+#include "uds_cfg.def"
 #include "virtual_socketcan.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <linux/can.h>
 
-#define UDS_TP_Cs                (UDS_TP_Cr - UDS_TP_As)
-#define UDS_TP_Br                (UDS_TP_Bs - UDS_TP_Ar)
-
-
-#define TEST_WIN32
-
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief api of uds
  *  include 
  */
+UDS_EXT uds_timer_t uds_timer[UDS_TIEMR_NUM];
 
-
-#define UDS_N_WAITCF_IND    0x00u
-#define UDS_N_WAITFC_IND    0x01u
-
-
-
-#define UDS_TP_WAIT_FC_TIMEOUT          (UDS_TP_As + UDS_TP_Bs)  /* when we are a sender */
-#define UDS_TP_WAIT_CF_TIMEOUT          (UDS_TP_Cr)              /* when we are a receiver, and we got a cf already. */
-
-
-
+UDS_EXT uint8_t rx_buffer[UDS_TP_BUF_SZ];
+UDS_EXT uint8_t tx_buffer[UDS_TP_BUF_SZ];
 
 UDS_EXT uds_dl_layer_t uds_dl;
 UDS_EXT uds_tp_layer_t uds_tp;
@@ -70,5 +60,47 @@ void uds_send_frame(struct can_frame *fr);
  * @return int 
  */
 int uds_req_diagnostic_session(uint8_t func, uint8_t sprsp);
+
+/**
+ * @brief Requests a reset of the ECU
+ * 
+ * @param func 
+ * @param sprsp 
+ * @return int 
+ */
+int uds_req_ecu_reset(uint8_t func, uint8_t sprsp);
+
+/**
+ * @brief Requests a secure session
+ * 
+ * @param func 
+ * @param sprsp 
+ * @param key 
+ * @param klen 
+ * @return int 
+ */
+int uds_req_security_access(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen);
+
+/**
+ * @brief Enable/Disable certain messages
+ * 
+ * @param func 
+ * @param sprsp 
+ * @param type 
+ * @return int  
+ */
+int uds_req_communication_control(uint8_t func, uint8_t sprsp, uint8_t type);
+
+/**
+ * @brief Inform server that a tester is present
+ * 
+ * @param sprsp 
+ * @return int  
+ */
+int uds_req_tester_present(uint8_t sprsp);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __UDS_H__

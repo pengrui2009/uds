@@ -13,14 +13,19 @@
 #define UDS_AP_H_
 
 #include "uds_tp.h"
-#include "uds_cfg.def"
-#include "cmn.h"
+// #include "uds_cfg.def"
+// #include "cmn.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define suppressPosRspMsgIndicationBit  0x80u
 #define exceedNumberofTrySecurity       10
 
-#define RESPONSE_SID_OF(request_sid) (request_sid + 0x40)
-#define REQUEST_SID_OF(response_sid) (response_sid - 0x40)
+#define RESPONSE_SID_OF(request_sid)    (request_sid + 0x40)
+#define REQUEST_SID_OF(response_sid)    (response_sid - 0x40)
 
 /* SUB-FUNCTION defines */
 /* 0X10 */
@@ -54,12 +59,8 @@
 #define DTC_ON                          0x01u
 #define DTC_OFF                         0x02u
 
-
-#define UDS_TIEMR_NUM       0x04u
-
-
-#define UDS_A_S3_IND        0x02u
-#define UDS_A_SADELAY_IND   0x03u
+#define UDS_P2_IND                      0x00u
+// #define UDS_A_SADELAY_IND               0x03u
 
 
 /**
@@ -227,10 +228,13 @@ typedef struct {
     uds_ap_sec_t            sec_ctrl;       /* 0x27 */
     uds_ap_cmm_t            cmm_ctrl;       /* 0x28 */
 
-    uds_timer_t            *ptmr_s3;
-    uds_timer_t            *ptmr_sadelay;
+    // timer for p2 or p2star
+    uds_timer_t            *ptmr_p2;
+    // uds_timer_t            *ptmr_sadelay;
     
+    // application status
     uds_ap_sts_t            sts;
+    // supress pos response
     bool_t                  sup_pos_rsp;
 } uds_ap_layer_t;
 
@@ -244,13 +248,80 @@ typedef struct {
     uds_ap_fun_t srv_rte;
 } uds_ap_service_t;
 
-typedef struct {
-    uint8_t *buf;
-    uint16_t len;
-    uint16_t buffer_size;
-} Iso14229Request;
 
-UDS_EXT uds_timer_t uds_timer[UDS_TIEMR_NUM];
+enum ClientOptions {
+    SUPPRESS_POS_RESP       = 0b00000001, // 服务器不应该发送肯定响应
+    FUNCTIONAL              = 0b00000010, // 发功能请求
+    NEG_RESP_IS_ERR         = 0b00000100, // 否定响应是属于故障
+    IGNORE_SERVER_TIMINGS   = 0b00001000, // 忽略服务器给的p2和p2_star
+};
+
+enum ClientRequestState {
+    kRequestStateIdle = 0,          // 完成
+    kRequestStateSending,           // 传输层现在传输数据
+    kRequestStateSent,              // 传输层完成传输。可以设置等待计时器
+    kRequestStateSentAwaitResponse, // 等待响应
+    kRequestStateProcessResponse,   // 处理响应
+};
+
+enum ClientError {
+    kCLIENTSEQ_ERR_MIN = INT16_MIN, // 固定范围
+
+    // 用户可以定义流程项管故障码在这个范围内
+
+    kSEQ_ERR_UNUSED = -127,
+    kSEQ_ERR_TIMEOUT,       // 流程超时
+    kSEQ_ERR_NULL_CALLBACK, // 回调函数是NULL
+
+    kCLIENT_ERR_RESP_SCHEMA_INVALID = -12, // 数据内容或者大小不按照应用定义(如ODX)
+
+    kCLIENT_ERR_RESP_DID_MISMATCH = -11,            // 响应DID对不上期待的DID
+    kCLIENT_ERR_RESP_CANNOT_UNPACK = -10,           // 响应不能解析
+    kCLIENT_ERR_RESP_TOO_SHORT = -9,                // 响应太小
+    kCLIENT_ERR_RESP_NEGATIVE = -8,                 // 否定响应
+    kCLIENT_ERR_RESP_SID_MISMATCH = -7,             // 请求和响应SID对不上
+    kCLIENT_ERR_RESP_UNEXPECTED = -6,               // 突然响应
+    kCLIENT_ERR_REQ_TIMED_OUT = -5,                 // 请求超时
+    kCLIENT_ERR_REQ_NOT_SENT_TPORT_ERR = -4,        // 传输层故障、没发
+    kCLIENT_ERR_REQ_NOT_SENT_BUF_TOO_SMALL = -3,    // 传输层缓冲器不够大
+    kCLIENT_ERR_REQ_NOT_SENT_INVALID_ARGS = -2,     // 参数不对、没发
+    kCLIENT_ERR_REQ_NOT_SENT_SEND_IN_PROGRESS = -1, // 在忙、没发
+    kCLIENT_OK = 0,                                 // 流程完成
+    kCLIENT_SEQUENCE_RUNNING = 1,                   // 流程正在跑、还没完成
+};
+
+struct ClientRequest {
+    const uint8_t *buffer_ptr;
+    uint16_t buffer_len;
+    uint16_t buffer_size;
+};
+
+struct ClientResponse {
+    const uint8_t *buffer_ptr;
+    uint16_t buffer_size;
+    uint16_t buffer_len;
+};
+
+typedef struct {
+    // 
+    struct ClientRequest    request;
+    struct ClientResponse   response;
+    enum ClientRequestState state;
+    enum ClientError        error;
+
+    enum ClientOptions      options;
+    enum ClientOptions      defaultOptions;
+    // a copy of the options at the time a request is made
+    enum ClientOptions      options_copy; 
+
+    // response             result data
+    const uint8_t           *result_data;     
+    // response             result length
+    uint32_t                result_len;      
+} UdsClient;
+
+
+// UDS_EXT uds_timer_t uds_timer[UDS_TIEMR_NUM];
 /**
  * @brief 
  * 
@@ -265,7 +336,7 @@ void uds_ap_init(uds_ap_layer_t *pap);
  * @param pap 
  * @param ptp 
  */
-int uds_ap_process(uds_ap_layer_t *pap, uds_tp_layer_t *ptp);
+int uds_ap_process(uds_ap_layer_t *pap, uds_tp_layer_t *ptp, UdsClient *uds_client_ptr);
 
 
 /**
@@ -290,69 +361,24 @@ void udsapp_update(void);
 void udsapp_nrsp_process(uint8_t svcid, uint8_t nrsp);
 
 /**
- * @brief Requests a higher level diagnostic session
+ * @brief 
  * 
- * @param func 
- * @param sprsp 
- */
-int udsapp_req_diagnostic_session(uds_tp_layer_t *uds_tp_ptr, uint8_t func, uint8_t sprsp);
-
-/**
- * @brief Requests a reset of the ECU
- * 
- * @param func 
- * @param sprsp 
- */
-// void uds_req_ecu_reset(uint8_t func, uint8_t sprsp)
-// {
-
-// }
-
-/**
- * @brief uds_req_security_access
- * 
- * @param func 
+ * @param func Read and change link timing
  * @param sprsp 
  * @param key 
  * @param klen 
- * @return enum Iso14229ClientError 
+ * @return int  
  */
-//enum Iso14229ClientError uds_req_security_access(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen);
-void uds_req_security_access(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen);
-
-/**
- * @brief Enable/Disable certain messages
- * 
- * @param func 
- * @param sprsp 
- * @param type 
- */
-void uds_req_communication_control(uint8_t func, uint8_t sprsp, uint8_t type);
-
-/**
- * @brief Inform server that a tester is present
- * 
- * @param sprsp 
- */
-void uds_req_tester_present(uint8_t sprsp);
-
-/**
- * @brief Read and change link timing
- * 
- * @param func 
- * @param sprsp 
- * @param key 
- * @param klen 
- */
-void uds_req_access_timing_parameter(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen );
+int uds_req_access_timing_parameter(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen);
 
 /**
  * @brief Transmit data in a secure manner
  * 
  * @param sd 
  * @param sdlen 
+ * @return int   
  */
-void uds_req_secured_data_transmission(uint8_t *sd, uint8_t sdlen);
+int uds_req_secured_data_transmission(uint8_t *sd, uint8_t sdlen);
 
 /**
  * @brief Halt/resume setting of DTCs
@@ -360,9 +386,10 @@ void uds_req_secured_data_transmission(uint8_t *sd, uint8_t sdlen);
  * @param func 
  * @param sprsp 
  * @param key 
- * @param klen 
+ * @param klen
+ * @return int 
  */
-void uds_req_control_dtc_setting(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen);
+int uds_req_control_dtc_setting(uint8_t func, uint8_t sprsp, uint8_t *key, uint8_t klen);
 
 /**
  * @brief Automatically respond to certain events with a defined request
@@ -373,56 +400,62 @@ void uds_req_control_dtc_setting(uint8_t func, uint8_t sprsp, uint8_t *key, uint
  * @param reclen 
  * @param rsp 
  * @param rsplen 
+ * @return int  
  */
-void uds_req_response_on_event(uint8_t evntype, uint8_t wintime, uint8_t *rec, uint8_t reclen, 
-    uint8_t *rsp, uint8_t rsplen);
+int uds_req_response_on_event(uint8_t evntype, uint8_t wintime, uint8_t *rec, uint8_t reclen, uint8_t *rsp, uint8_t rsplen);
 
 /**
  * @brief Check to see if transition of link baudrate to predefined rate is possible
  * 
  * @param sprsp 
  * @param baud 
+ * @return int 
  */
-void uds_req_link_control_predef(uint8_t sprsp, uint8_t baud);
+int uds_req_link_control_predef(uint8_t sprsp, uint8_t baud);
 
 /**
  * @brief Check to see if transition of link baudrate to specified rate is possible
  * 
  * @param sprsp 
  * @param baud 
+ * @return int  
  */
-void uds_req_link_control_user(uint8_t sprsp, uint32_t baud);
+int uds_req_link_control_user(uint8_t sprsp, uint32_t baud);
 
 /**
  * @brief Transition to previously discussed rate
  * 
  * @param func 
  * @param sprsp 
+ * @return int  
  */
-void uds_req_link_control(uint8_t func, uint8_t sprsp);
+int uds_req_link_control(uint8_t func, uint8_t sprsp);
 
 /**
  * @brief Reads data by defined dataIdentifier
  * 
  * @param did 
  * @param dlen 
+ * @return int   
  */
-void uds_req_read_data_by_id(uint16_t *did, uint8_t dlen);
+int uds_req_read_data_by_id(uint16_t *did, uint8_t dlen);
 
 /**
  * @brief Read memory by address
  * 
  * @param addr 
  * @param size 
+ * @return int  
  */
-void uds_req_read_memory_by_address(uint32_t addr, uint16_t size);
+int uds_req_read_memory_by_address(uint32_t addr, uint16_t size);
 
 /**
  * @brief Read scaling data by dataIdentifier
  * 
  * @param id 
+ * @return int 
  */
-void uds_req_read_scaling_by_id(uint16_t id);
+int uds_req_read_scaling_by_id(uint16_t id);
 
 /**
  * @brief Read data by periodic identifier
@@ -430,8 +463,9 @@ void uds_req_read_scaling_by_id(uint16_t id);
  * @param txmode 
  * @param did 
  * @param dlen 
+ * @return int  
  */
-void uds_req_read_data_by_periodic_id(uint8_t txmode, uint16_t *did, uint8_t dlen);
+int uds_req_read_data_by_periodic_id(uint8_t txmode, uint16_t *did, uint8_t dlen);
 
 /**
  * @brief Define a dataIdentifier for reading
@@ -442,8 +476,9 @@ void uds_req_read_data_by_periodic_id(uint8_t txmode, uint16_t *did, uint8_t dle
  * @param pos 
  * @param msize 
  * @param len 
+ * @return int  
  */
-void uds_req_dynamically_define_by_data_id(uint8_t sprsp, uint16_t ddid, uint16_t *sdid, 
+int uds_req_dynamically_define_by_data_id(uint8_t sprsp, uint16_t ddid, uint16_t *sdid, 
     uint8_t *pos, uint8_t *msize, uint8_t len);
 
 /**
@@ -454,16 +489,19 @@ void uds_req_dynamically_define_by_data_id(uint8_t sprsp, uint16_t ddid, uint16_
  * @param addr 
  * @param size 
  * @param len 
+ * @return int
  */
-void uds_req_dynamically_define_by_memory_address(uint8_t sprsp, uint16_t ddid, uint32_t *addr, uint16_t *size, uint8_t len);
+int uds_req_dynamically_define_by_memory_address(uint8_t sprsp, uint16_t ddid, uint32_t *addr, 
+    uint16_t *size, uint8_t len);
 
 /**
  * @brief Clear a dynamically defined data Identifier
  * 
  * @param sprsp 
  * @param ddid 
+ * @return int 
  */
-void uds_req_clear_dynamically_defined_data_id(uint8_t sprsp, uint16_t ddid);
+int uds_req_clear_dynamically_defined_data_id(uint8_t sprsp, uint16_t ddid);
 
 /**
  * @brief Write data specified by dataIdentifier
@@ -471,8 +509,9 @@ void uds_req_clear_dynamically_defined_data_id(uint8_t sprsp, uint16_t ddid);
  * @param did 
  * @param drec 
  * @param len 
+ * @return int 
  */
-void uds_req_write_data_by_id(uint16_t did, uint8_t *drec, uint8_t len);
+int uds_req_write_data_by_id(uint16_t did, uint8_t *drec, uint8_t len);
 
 /**
  * @brief Write data to memory by address
@@ -480,32 +519,35 @@ void uds_req_write_data_by_id(uint16_t did, uint8_t *drec, uint8_t len);
  * @param addr 
  * @param size 
  * @param drec 
+ * @return int  
  */
-void uds_req_write_memory_by_address(uint32_t addr, uint16_t size, uint8_t *drec);
+int uds_req_write_memory_by_address(uint32_t addr, uint16_t size, uint8_t *drec);
 
 /**
  * @brief Clear DTC information
  * 
  * @param dtc 
+ * @return int   
  */
-void uds_req_clear_diagnostic_information(uint32_t dtc);
+int uds_req_clear_diagnostic_information(uint32_t dtc);
 
 /**
- * @brief 
+ * @brief Read DTC info by status mask
  * 
+ * @param func 
  * @param sprsp 
  * @param mask 
+ * @return int  
  */
-// void uds_req_read_dtc_data_info_mask(uint8_t sprsp, uint8_t mask)
-// {
+int uds_req_read_dtc_info_mask(uint8_t func, uint8_t sprsp, uint8_t mask);
 
-// }
 /**
- * @brief Request report of all DTC Snapshots
+ * @brief Request report of all DTCSnapshots
  * 
  * @param sprsp 
+ * @return int  
  */
-void uds_req_read_dtc_info_report_snapshot_id(uint8_t sprsp);
+int uds_req_read_dtc_info_report_snapshot_id(uint8_t sprsp);
 
 /**
  * @brief Request report of DTCSnapshots related to specified DTC
@@ -513,16 +555,18 @@ void uds_req_read_dtc_info_report_snapshot_id(uint8_t sprsp);
  * @param sprsp 
  * @param mask 
  * @param recnum 
+ * @return int  
  */
-void uds_req_read_dtc_info_report_snapshot_by_dtc(uint8_t sprsp, uint32_t mask, uint8_t recnum);
+int uds_req_read_dtc_info_report_snapshot_by_dtc(uint8_t sprsp, uint32_t mask, uint8_t recnum);
 
 /**
  * @brief Read data from specified DTCSnapshot
  * 
  * @param sprsp 
  * @param recnum 
+ * @return int  
  */
-void uds_req_read_dtc_info_report_snapshot_by_record(uint8_t sprsp, uint8_t recnum);
+int uds_req_read_dtc_info_report_snapshot_by_record(uint8_t sprsp, uint8_t recnum);
 
 /**
  * @brief Read extended data about specified DTC
@@ -531,8 +575,9 @@ void uds_req_read_dtc_info_report_snapshot_by_record(uint8_t sprsp, uint8_t recn
  * @param sprsp 
  * @param mask 
  * @param recnum 
+ * @return int  
  */
-void uds_req_read_dtc_info_edr_dtc(uint8_t func, uint8_t sprsp, uint32_t mask, uint8_t recnum);
+int uds_req_read_dtc_info_edr_dtc(uint8_t func, uint8_t sprsp, uint32_t mask, uint8_t recnum);
 
 /**
  * @brief Request list of DTCs which match specified severity level
@@ -540,24 +585,28 @@ void uds_req_read_dtc_info_edr_dtc(uint8_t func, uint8_t sprsp, uint32_t mask, u
  * @param func 
  * @param sprsp 
  * @param mask 
+ * @return int  
  */
-void uds_req_read_dtc_info_severity_info(uint8_t func, uint8_t sprsp, uint16_t mask);
+int uds_req_read_dtc_info_severity_info(uint8_t func, uint8_t sprsp, uint16_t mask);
 
 /**
  * @brief Read severity info of specified DTC
  * 
  * @param sprsp 
  * @param mask 
+ * @return int  
  */
-void uds_req_read_dtc_info_severity_dtc(uint8_t sprsp, uint32_t mask);
+int uds_req_read_dtc_info_severity_dtc(uint8_t sprsp, uint32_t mask);
 
 /**
  * @brief Catchall function for remaining DTC info sub-functions
  * 
  * @param func 
  * @param sprsp 
+ * @return int  
  */
-void uds_req_read_dtc_info_misc(uint8_t func, uint8_t sprsp);
+int uds_req_read_dtc_info_misc(uint8_t func, uint8_t sprsp);
+
 
 /**
  * @brief Emulate value for input/output signal
@@ -567,8 +616,9 @@ void uds_req_read_dtc_info_misc(uint8_t func, uint8_t sprsp);
  * @param optlen 
  * @param mask 
  * @param masklen 
+ * @return int  
  */
-void uds_req_io_control(uint16_t did, uint8_t *opt, uint8_t optlen, uint8_t *mask, uint8_t masklen);
+int uds_req_io_control(uint16_t did, uint8_t *opt, uint8_t optlen, uint8_t *mask, uint8_t masklen);
 
 /**
  * @brief Start/stop stored routine
@@ -577,8 +627,9 @@ void uds_req_io_control(uint16_t did, uint8_t *opt, uint8_t optlen, uint8_t *mas
  * @param rid 
  * @param ropt 
  * @param optlen 
+ * @return int  
  */
-void uds_req_routine_control(uint8_t rtype, uint16_t rid, uint8_t *ropt, uint8_t optlen);
+int uds_req_routine_control(uint8_t rtype, uint16_t rid, uint8_t *ropt, uint8_t optlen);
 
 /**
  * @brief Request a download to the server
@@ -588,8 +639,9 @@ void uds_req_routine_control(uint8_t rtype, uint16_t rid, uint8_t *ropt, uint8_t
  * @param maddrlen 
  * @param msize 
  * @param msizelen 
+ * @return int  
  */
-void uds_req_download(uint8_t dfmtid, uint8_t *maddr, uint8_t maddrlen, uint8_t *msize, uint8_t msizelen);
+int uds_req_download(uint8_t dfmtid, uint8_t *maddr, uint8_t maddrlen, uint8_t *msize, uint8_t msizelen);
 
 /**
  * @brief Request an upload from the server
@@ -599,8 +651,9 @@ void uds_req_download(uint8_t dfmtid, uint8_t *maddr, uint8_t maddrlen, uint8_t 
  * @param maddrlen 
  * @param msize 
  * @param msizelen 
+ * @return int  
  */
-void uds_req_upload(uint8_t dfmtid, uint8_t *maddr, uint8_t maddrlen, uint8_t *msize, uint8_t msizelen);
+int uds_req_upload(uint8_t dfmtid, uint8_t *maddr, uint8_t maddrlen, uint8_t *msize, uint8_t msizelen);
 
 /**
  * @brief Transfer data after request has been made
@@ -610,29 +663,40 @@ void uds_req_upload(uint8_t dfmtid, uint8_t *maddr, uint8_t maddrlen, uint8_t *m
  * @param paramlen 
  * @return int 
  */
-int uds_req_transfer_data(uint8_t blckcnt, uint8_t *txparam, uint8_t paramlen);
+int uds_req_transfer_data(uint8_t blckcnt, uint8_t *txparam, uint32_t paramlen);
 
 /**
  * @brief Exit data transfer mode
  * 
  * @param sd 
  * @param sdlen 
+ * @return int  
  */
-void uds_req_transfer_exit(uint8_t *sd, uint8_t sdlen);
+int uds_req_transfer_exit(uint8_t *sd, uint8_t sdlen);
 
 /**
  * @brief Automatically create secured session
  * 
  * @param level 
+ * @return int  
  */
-void uds_create_secured_session(uint8_t level);
+int uds_create_secured_session(uint8_t level);
 
 /**
  * @brief Processes seed into key for secure session creation
  * 
  * @param seed 
  * @param seedlen 
+ * @return int  
  */
-void udsapp_process_seed(uint8_t *seed, uint16_t *seedlen);
+int udsapp_process_seed(uint8_t *seed, uint16_t *seedlen);
+
+
+
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UDS_AP_H_ */

@@ -12,30 +12,33 @@
 
 /* data type for data link layer */
 
-
+#define UDS_TIEMR_NUM       0x04u
 
 /* data type for transfer layer */
-#define UDS_TP_Ar                   25u
-#define UDS_TP_Cr                   150u
-#define UDS_TP_As                   25u
-#define UDS_TP_Bs                   75u
+#define UDS_TP_Ar                   (25U)
+#define UDS_TP_Cr                   (150U)
+#define UDS_TP_As                   (25U)
+#define UDS_TP_Bs                   (75U)
 
-#define UDS_TP_WFT_MAX              10u
-#define UDS_TP_STmin                10u
-#define UDS_TP_BS                   0u
+#define UDS_TP_WFT_MAX              (10U)
+#define UDS_TP_STmin                (10U)
+#define UDS_TP_BS                   (0U)
 
-#define UDS_TP_FUNCTION_ADDR        0x18DBFFF9u
-#define UDS_TP_PHYSICAL_ADDR        0x18DA1EF9u
-#define UDS_TP_TRANSPORT_ADDR       0x18DAF91Eu                            
+#define UDS_TP_FUNCTION_ADDR        (0x18DBFFF9U)
+#define UDS_TP_PHYSICAL_ADDR        (0x18DA1EF9U)
+#define UDS_TP_TRANSPORT_ADDR       (0x18DAF91EU)
 
-#define UDS_FILL_VALUE              0xAAu
+#define UDS_FILL_VALUE              (0xAAU)
 
 /* data type for application layer */
-#define P2_SERVER_MAX               50u    
-#define P2X_SERVER_MAX              5000u
+#define P2_SERVER_MAX               (50U) 
+#define P2X_SERVER_MAX              (5000U)
 
-#define S3_SERVER_MAX               1000u
-#define SECURITYACCESS_DELAY_TIME   1000u
+#define S3_SERVER_MAX               (1000U)
+#define SECURITYACCESS_DELAY_TIME   (1000U)
+
+#define P2_CLIENT_MS                (150U)
+#define P2_CLIENT_STAR_MS           (1500U)
 
 
 

@@ -15,6 +15,11 @@
 #include <stdint.h>
 #include "cmn.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 typedef enum {
     UDS_Q_OK = 0,
     UDS_Q_FULL,
@@ -48,5 +53,9 @@ uds_q_rslt uds_qenqueue(uds_q_t *q, void *elem, uint16_t sz);
  * @return uds_q_rslt 
  */
 uds_q_rslt uds_qflush(uds_q_t *q);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UDS_Q_H_ */

@@ -22,6 +22,6 @@
 
 #define RESET_TYPE_EXIT 4U
 
-#define ISOTP_BUFSIZE 256U
+#define ISOTP_BUFSIZE 512U
 
 #endif /* CONFIG_H_ */
