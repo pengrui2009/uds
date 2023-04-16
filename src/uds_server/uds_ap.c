@@ -220,7 +220,8 @@ const uds_ap_service_t uds_service_list[] = {
     },
     {
         TransferData,                      
-        (programmingSession), 
+        /* (programmingSession), */
+        (defaultSession|programmingSession|extendedDiagnosticSession), 
         SECURITY_LEVEL_0, 
         uds_service_0x36
     },
@@ -344,9 +345,8 @@ void uds_ap_process(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
             uds_service_ptr = uds_service_find(ptp->in.buf[0]);
             
             // check if sid in uds_service_list
-            if (uds_service_ptr != (uds_ap_service_t *)0) {
-                printf("sid:%d uds_service find\n", ptp->in.buf[0]);
-                // current session is satisfied for sid
+            if (uds_service_ptr != (uds_ap_service_t *)0) {                
+                // current session is satisfied for sid                
                 if (uds_service_ptr->spt_ses & pap->cur_ses) {
                     // current security is satisfied for sid
                     if (uds_service_ptr->spt_sec > pap->cur_sec) {
@@ -1219,7 +1219,38 @@ static void uds_service_0x35(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 
 static void uds_service_0x36(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)
 {
+    uds_ap_nrc_type_t nrc;
+    bool_t pos_rsp_flag = false;
 
+    if (ptp->in.pci.dl < 2) {
+        pos_rsp_flag = true;
+        nrc = incorrectMessageLengthOrInvalidFormat;        
+    } else {
+        uint8_t blockSequenceCounter = ptp->in.buf[1];
+
+        if (ptp->in.pci.dl <= UDS_TP_BUF_SZ) {
+            ptp->out.sts = N_STS_REDAY;
+            ptp->out.buf[0] = ptp->in.buf[0] + 0x40u;
+            ptp->out.buf[1] = ptp->in.buf[1];
+            ptp->out.pci.dl = 2u;
+        
+            // if (pap->cur_ses != defaultSession) {
+            //     pap->ptmr_s3->st = true;
+            //     pap->ptmr_s3->cnt = pap->ptmr_s3->val;
+            // } else {
+            //     pap->ptmr_s3->st = false;
+            // }
+        } else {
+            pos_rsp_flag = true;
+            nrc = incorrectMessageLengthOrInvalidFormat;
+            
+        }    
+    }
+
+    if (pos_rsp_flag) {
+        uds_service_response_negative(pap, ptp, nrc);
+    }
+    
 }
 
 static void uds_service_0x37(uds_ap_layer_t *pap, uds_tp_layer_t *ptp)

@@ -139,10 +139,10 @@ int main()
     }
 
     uint8_t blckcnt = 1;
-    uint8_t txparam[512] = {0x0};
-    uint32_t paramlen = 512;
+    uint8_t txparam[510] = {0x0};
+    uint32_t paramlen = 510;
 
-    for (int i=0; i<512; i++)
+    for (int i=0; i<510; i++)
     {
         txparam[i] = (i % 256);
     }

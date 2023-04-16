@@ -120,7 +120,7 @@ int main(void)
             continue;
         }
 
-        printf("canid:%x\n", fr.can_id);
+        // printf("canid:%x\n", fr.can_id);
         if (fr.can_id == UDS_TP_FUNCTION_ADDR || fr.can_id == UDS_TP_PHYSICAL_ADDR) 
         {
             uds_q_rslt result = uds_qenqueue(&uds_dl.in_qf, &fr, (uint16_t)(sizeof(struct can_frame)));

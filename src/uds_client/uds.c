@@ -966,7 +966,8 @@ int uds_req_transfer_data(uint8_t blckcnt, uint8_t *txparam, uint32_t paramlen)
 
     memcpy(&uds_tp.out.buf[2], txparam, paramlen);
 
-    uds_tp.out.pci.dl = 2;
+    uds_tp.out.pci.dl = (2 + paramlen);
+    // uds_tp.out.pci.pt = ;
     uds_ap.sts = A_STS_BUSY;
     
     while((result = uds_ap_process(&uds_ap, &uds_tp, &client)) > 0)

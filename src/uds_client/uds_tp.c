@@ -122,7 +122,7 @@ void uds_tp_process_out(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
     switch (ptp->out.sts) {
         case N_STS_IDLE:
             break;
-        case N_STS_REDAY:
+        case N_STS_REDAY:            
             if (ptp->out.pci.dl > 7) {
                 ptp->out.pci.pt = N_PCI_FF;
             } else {
@@ -136,6 +136,12 @@ void uds_tp_process_out(uds_tp_layer_t *ptp, uds_dl_layer_t *pdl)
                     break;
                 case N_PCI_FF:
                     uds_tp_process_out_ff(ptp, &pdl->out.fr);
+                    printf("id:%x dl:%d data:", pdl->out.fr.can_id, pdl->out.fr.can_dlc);
+                    for (int i=0; i < pdl->out.fr.can_dlc; i++)
+                    {
+                        printf("%02X ", pdl->out.fr.data[i]);
+                    }
+                    printf("\n");
                     pdl->out.sts = L_STS_READY;
                     break;
                 case N_PCI_FC:
@@ -297,7 +303,8 @@ static void uds_tp_process_in_cf(uds_tp_layer_t *ptp, struct can_frame* pfr)
  * @param pfr 
  */
 static void uds_tp_process_in_fc(uds_tp_layer_t *ptp, struct can_frame* pfr)
-{   
+{
+    printf("uds_tp_process_in_fc ptp->out.sts:%d\n", ptp->out.sts);
     if (ptp->out.sts == N_STS_BUSY_WAIT) {
         ptp->in.pci.fs = pfr->data[0] & 0x0Fu;
 
@@ -314,7 +321,7 @@ static void uds_tp_process_in_fc(uds_tp_layer_t *ptp, struct can_frame* pfr)
 
                 ptp->out.cfg.fs = ptp->in.pci.fs;
                 ptp->out.cfg.bs = ptp->in.pci.bs;
-                ptp->out.cfg.stmin = ptp->in.pci.stmin;
+                ptp->out.cfg.stmin = ptp->in.pci.stmin;                
                 break;
             case N_FS_OVFLW:
                 ptp->out.wf_cnt = 0;
@@ -371,6 +378,7 @@ static void uds_tp_process_out_ff(uds_tp_layer_t *ptp, struct can_frame* pfr)
     pfr->data[0] = (uint8_t)(0x10u + (ptp->out.pci.dl >> 8));
     pfr->data[1] = (uint8_t)(ptp->out.pci.dl & 0xFFu);
     memcpy(&pfr->data[2], ptp->out.buf, 6);
+    pfr->can_dlc = 8;
     ptp->out.buf_pos = 6;
 
     ptp->out.cf_cnt = 0;
